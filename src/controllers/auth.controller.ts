@@ -37,7 +37,7 @@ export const googleAuth = async (req: Request, res: Response) => {
         data: {
           email,
           name: name || '',
-          mobileNumber: '', // User can update this later
+          mobileNumber: '', // Use an empty string as a placeholder for optional field
           role: 'USER' // Default role
         }
       });
@@ -88,33 +88,97 @@ export const googleAuth = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const { mobileNumber, name } = req.body;
-
-    // Check if mobile number is already used by another user
-    if (mobileNumber) {
-      const existingUser = await prisma.user.findUnique({
-        where: { mobileNumber }
-      });
-
-      if (existingUser && existingUser.id !== userId) {
-        return res.status(400).json({ message: 'Mobile number already in use' });
-      }
-    }
+    const { name, mobileNumber } = req.body;
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        ...(mobileNumber && { mobileNumber }),
-        ...(name && { name })
+        name,
+        mobileNumber
       }
     });
 
-    res.json({
-      success: true,
-      user: updatedUser
-    });
+    res.json(updatedUser);
   } catch (error) {
     console.error('Error updating profile:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+};
+
+export const registerGymOwner = async (req: Request, res: Response) => {
+  try {
+    const { firebaseToken, gymName }: { firebaseToken: string; gymName: string } = req.body;
+
+    if (!firebaseToken) {
+      return res.status(400).json({ message: 'Firebase token is required' });
+    }
+
+    if (!gymName) {
+      return res.status(400).json({ message: 'Gym name is required' });
+    }
+
+    // Verify the Firebase ID token
+    const decodedToken = await auth.verifyIdToken(firebaseToken);
+    
+    const { email, name, uid } = decodedToken;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email not found in token' });
+    }
+
+    // Start a transaction to ensure data consistency
+    const result = await prisma.$transaction(async (prisma) => {
+      // Check if user exists and update role to OWNER, or create new user
+      let user = await prisma.user.upsert({
+        where: { email },
+        update: {
+          role: 'OWNER'
+        },
+        create: {
+          email,
+          name: name || '',
+          mobileNumber: '', // Use an empty string as a placeholder for optional field
+          role: 'OWNER'
+        }
+      });
+
+      // Create the gym entry
+      const gym = await prisma.gym.create({
+        data: {
+          name: gymName,
+          ownerId: user.id,
+          // Required fields with placeholder values until updated
+          address: '',
+          city: '',
+          state: '',
+          pincode: '',
+          pricePerDay: 0
+        }
+      });
+
+      return { user, gym };
+    });
+
+    // Generate JWT token for the session
+    const token = jwt.sign(
+      { 
+        userId: result.user.id,
+        email: result.user.email,
+        role: result.user.role
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Gym owner registered successfully',
+      user: result.user,
+      gym: result.gym,
+      token
+    });
+
+  } catch (error) {
+    console.error('Error registering gym owner:', error);
+    res.status(500).json({ message: 'Failed to register gym owner' });
   }
 };

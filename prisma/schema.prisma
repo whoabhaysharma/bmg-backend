@@ -10,7 +10,7 @@ datasource db {
 model User {
   id             String     @id @default(cuid())
   name           String?
-  mobileNumber   String     @unique
+  mobileNumber   String?    @unique
   email          String?    @unique
   role           Role       @default(USER)
   gyms           Gym[]      @relation("OwnerGyms")

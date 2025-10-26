@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String?
+  mobileNumber   String     @unique
+  email          String?    @unique
+  role           Role       @default(USER)
+  gyms           Gym[]      @relation("OwnerGyms")
+  bookings       Booking[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Gym {
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  address        String
+  city           String
+  state          String
+  pincode        String
+  images         String[]
+  ownerId        String
+  owner          User        @relation("OwnerGyms", fields: [ownerId], references: [id])
+  bookings       Booking[]
+  pricePerDay    Float
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Booking {
+  id             String     @id @default(cuid())
+  userId         String
+  gymId          String
+  startDate      DateTime
+  endDate        DateTime
+  status         BookingStatus  @default(PENDING)
+  qrCode         String?
+  paymentId      String?        @unique
+  user           User           @relation(fields: [userId], references: [id])
+  gym            Gym            @relation(fields: [gymId], references: [id])
+  payment        Payment?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Payment {
+  id             String      @id @default(cuid())
+  bookingId      String      @unique
+  amount         Float
+  currency       String      @default("INR")
+  paymentStatus  PaymentStatus @default(PENDING)
+  provider       String?
+  transactionId  String?     @unique
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  booking        Booking     @relation(fields: [bookingId], references: [id])
+}
+
+enum Role {
+  USER
+  OWNER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}

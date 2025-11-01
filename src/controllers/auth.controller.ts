@@ -20,7 +20,7 @@ export const googleAuth = async (req: Request, res: Response) => {
     // Verify the Firebase ID token (this verifies Google signed it)
     const decodedToken = await auth.verifyIdToken(firebaseToken);
     
-    const { email, name, uid } = decodedToken;
+    const { email, name } = decodedToken;
 
     if (!email) {
       return res.status(400).json({ message: 'Email not found in token' });
@@ -126,38 +126,72 @@ export const registerGymOwner = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email not found in token' });
     }
 
+    console.log('Decoded Firebase token:', decodedToken);
+    console.log('Starting transaction to register gym owner...');
+
     // Start a transaction to ensure data consistency
     const result = await prisma.$transaction(async (prisma) => {
-      // Check if user exists and update role to OWNER, or create new user
-      let user = await prisma.user.upsert({
-        where: { email },
-        update: {
-          role: 'OWNER'
-        },
-        create: {
-          email,
-          name: name || '',
-          mobileNumber: '', // Use an empty string as a placeholder for optional field
-          role: 'OWNER'
+      console.log('Checking if user exists by email or mobileNumber...');
+
+      // Check if user exists by email or mobileNumber
+      let existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email },
+            { mobileNumber: '' } // Replace with actual mobileNumber if available
+          ]
         }
       });
+
+      if (existingUser) {
+        console.log('User already exists:', existingUser);
+        // Update the role to OWNER if not already
+        if (existingUser.role !== 'OWNER') {
+          existingUser = await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { role: 'OWNER' }
+          });
+        }
+      } else {
+        console.log('Creating a new user...');
+        existingUser = await prisma.user.create({
+          data: {
+            email,
+            name: name || '',
+            role: 'OWNER',
+            mobileNumber: '' // Provide mobileNumber if available
+          }
+        });
+      }
+
+      console.log('User processed successfully:', existingUser);
 
       // Create the gym entry
-      const gym = await prisma.gym.create({
-        data: {
-          name: gymName,
-          ownerId: user.id,
-          // Required fields with placeholder values until updated
-          address: '',
-          city: '',
-          state: '',
-          pincode: '',
-          pricePerDay: 0
-        }
-      });
+      let gym;
+      try {
+        gym = await prisma.gym.create({
+          data: {
+            name: gymName,
+            ownerId: existingUser.id,
+            // Required fields with placeholder values until updated
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            pricePerDay: 0
+          }
+        });
+      } catch (error) {
+        console.error('Error during gym creation:', error);
+        throw error;
+      }
 
-      return { user, gym };
+      console.log('Gym creation successful:', gym);
+
+      return { user: existingUser, gym };
     });
+
+    console.log('Transaction completed successfully:', result);
 
     // Generate JWT token for the session
     const token = jwt.sign(

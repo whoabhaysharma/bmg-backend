@@ -50,9 +50,11 @@
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "prisma": "^6.18.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
     "tsx": "^4.20.6"
+  },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
   }
 }

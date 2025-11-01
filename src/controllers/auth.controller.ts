@@ -2,11 +2,25 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { auth } from '../config/firebase.js';
 import prisma from '../lib/prisma.js';
+import { Role, User, UserRole } from '@prisma/client';
 
 interface FirebaseAuthRequest {
   firebaseToken: string; // ID token from Firebase
 }
 
+// Helper function to generate JWT token
+const generateToken = (user: any) => {
+  return jwt.sign(
+    { 
+      userId: user.id,
+      email: user.email
+    },
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: '7d' }
+  );
+};
+
+// Basic signup/login with Google
 export const googleAuth = async (req: Request, res: Response) => {
   try {
     const { firebaseToken }: FirebaseAuthRequest = req.body;
@@ -26,31 +40,28 @@ export const googleAuth = async (req: Request, res: Response) => {
 
     // Check if user exists in our database
     let user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      include: {
+        userRoles: true
+      }
     });
 
     if (!user) {
-      // Create new user if doesn't exist
+      // Create new user if doesn't exist (without any role)
       user = await prisma.user.create({
         data: {
           email,
           name: name || '',
           mobileNumber: '', // Use an empty string as a placeholder for optional field
-          role: 'USER' // Default role
+        },
+        include: {
+          userRoles: true
         }
       });
     }
 
     // Generate our own JWT token for the session
-    const token = jwt.sign(
-      { 
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
+    const token = generateToken(user);
 
     res.json({
       success: true,
@@ -103,6 +114,54 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
+// Assign role to user
+export const assignRole = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { role }: { role: Role } = req.body;
+
+    if (!role || !Object.values(Role).includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if role already assigned
+    const existingRole = user.roles.find(r => r.role === role);
+    if (existingRole) {
+      return res.status(400).json({ message: 'User already has this role' });
+    }
+
+    // Assign new role
+    const userRole = await prisma.userRole.create({
+      data: {
+        userId,
+        role
+      }
+    });
+
+    res.json({
+      message: 'Role assigned successfully',
+      userRole
+    });
+
+  } catch (error) {
+    console.error('Error assigning role:', error);
+    res.status(500).json({ message: 'Failed to assign role' });
+  }
+};
+
+// Register gym owner with role check
 export const registerGymOwner = async (req: Request, res: Response) => {
   try {
     const { firebaseToken, gymName }: { firebaseToken: string; gymName: string } = req.body;
@@ -118,7 +177,7 @@ export const registerGymOwner = async (req: Request, res: Response) => {
     // Verify the Firebase ID token
     const decodedToken = await auth.verifyIdToken(firebaseToken);
     
-    const { email, name, uid } = decodedToken;
+    const { email, name } = decodedToken;
 
     if (!email) {
       return res.status(400).json({ message: 'Email not found in token' });

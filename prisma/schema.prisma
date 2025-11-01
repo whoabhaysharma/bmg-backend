@@ -8,93 +8,112 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(cuid())
+  id             String           @id @default(cuid())
   name           String?
-  mobileNumber   String?       @unique
-  email          String?       @unique
-  role           Role          @default(USER)
-  gyms           Gym[]         @relation("OwnerGyms")
-  bookings       Booking[]
-  attendances    Attendance[]  // 👈 Added relation
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  email          String?          @unique
+  password       String?
+  mobileNumber   String?          @unique
+  googleId       String?          @unique
+  roles          UserRole[]
+  gymsOwned      Gym[]            @relation("GymOwner")
+  subscriptions  Subscription[]
+  attendanceLogs Attendance[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Gym {
-  id             String        @id @default(cuid())
-  name           String
-  description    String?
-  address        String
-  city           String
-  state          String
-  pincode        String
-  images         String[]
-  ownerId        String
-  owner          User          @relation("OwnerGyms", fields: [ownerId], references: [id])
-  bookings       Booking[]
-  attendances    Attendance[]  // 👈 Added relation
-  pricePerDay    Float
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                String                @id @default(cuid())
+  name              String
+  address           String?
+  ownerId           String
+  owner             User                  @relation("GymOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  subscriptionPlans GymSubscriptionPlan[]
+  subscribers       Subscription[]
+  attendanceLogs    Attendance[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 }
 
-model Booking {
-  id             String        @id @default(cuid())
-  userId         String
-  gymId          String
-  startDate      DateTime
-  endDate        DateTime
-  status         BookingStatus @default(PENDING)
-  qrCode         String?
-  paymentId      String?       @unique
-  user           User          @relation(fields: [userId], references: [id])
-  gym            Gym           @relation(fields: [gymId], references: [id])
-  payment        Payment?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+model GymSubscriptionPlan {
+  id               String                @id @default(cuid())
+  gymId            String
+  gym              Gym                   @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name             String                // e.g. "Monthly Plan", "Quarterly Plan"
+  description      String?               // Optional details
+  durationInMonths Int                   // e.g. 1, 3, 6
+  price            Int                   // Price in whole number (e.g. 999)
+  isActive         Boolean               @default(true)
+  subscriptions    Subscription[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+}
+
+model Subscription {
+  id                 String                @id @default(cuid())
+  userId             String
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymId              String
+  gym                Gym                   @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               GymSubscriptionPlan   @relation(fields: [planId], references: [id])
+  startDate          DateTime              @default(now())
+  endDate            DateTime
+  status             SubscriptionStatus    @default(ACTIVE)
+  payment            Payment?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  bookingId      String        @unique
-  amount         Float
-  currency       String        @default("INR")
-  paymentStatus  PaymentStatus @default(PENDING)
-  provider       String?
-  transactionId  String?       @unique
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  booking        Booking       @relation(fields: [bookingId], references: [id])
+  id              String         @id @default(cuid())
+  subscriptionId  String         @unique
+  subscription    Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount          Int            // Matching Int-based pricing
+  method          String?
+  status          PaymentStatus  @default(PENDING)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model Attendance {
-  id           String     @id @default(cuid())
-  userId       String
-  gymId        String
-  scannedAt    DateTime   @default(now())
-  createdAt    DateTime   @default(now())
-  
-  user         User       @relation(fields: [userId], references: [id])
-  gym          Gym        @relation(fields: [gymId], references: [id])
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymId     String
+  gym       Gym        @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  date      DateTime   @default(now())
+  checkIn   DateTime?
+  checkOut  DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  @@unique([userId, gymId, scannedAt])
+  @@unique([userId, gymId, date])  // ✅ One attendance per day per gym per user
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role
+  createdAt DateTime @default(now())
+
+  @@unique([userId, role])  // ✅ Prevent duplicate role entries
 }
 
 enum Role {
-  USER
   OWNER
+  SUBSCRIBER
 }
 
-enum BookingStatus {
-  PENDING
-  CONFIRMED
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
   CANCELLED
-  COMPLETED
 }
 
 enum PaymentStatus {
   PENDING
-  SUCCESS
+  COMPLETED
   FAILED
-  REFUNDED
 }

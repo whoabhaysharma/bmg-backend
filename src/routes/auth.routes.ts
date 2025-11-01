@@ -1,16 +1,16 @@
-import express from 'express';
-import { googleAuth, updateProfile, registerGymOwner } from '../controllers/auth.controller.js';
-import { authenticate } from '../middlewares/auth.js';
+import { Router } from 'express';
+import { googleAuth, updateProfile, registerGymOwner, assignRole } from '../controllers/auth.controller.js';
 
-const router = express.Router();
+const router = Router();
 
-// Google authentication
-router.post('/google', googleAuth);
+// Authentication Routes
+router.post('/auth/google', googleAuth);
+router.put('/profile/:userId', updateProfile);
 
-// Register as gym owner
-router.post('/register-gym-owner', registerGymOwner);
+// Role Management
+router.post('/users/:userId/roles', assignRole);
 
-// Update profile (protected route)
-router.patch('/profile/:userId', authenticate, updateProfile);
+// Gym Owner Registration (requires OWNER role)
+router.post('/auth/register-gym-owner', registerGymOwner);
 
 export default router;

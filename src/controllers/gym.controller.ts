@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest, CreateGymInput } from '../types/index.js';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma.js';
 
 export const createGym = async (req: AuthRequest, res: Response) => {
   try {

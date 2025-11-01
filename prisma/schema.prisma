@@ -8,19 +8,20 @@ datasource db {
 }
 
 model User {
-  id             String     @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String?
-  mobileNumber   String?    @unique
-  email          String?    @unique
-  role           Role       @default(USER)
-  gyms           Gym[]      @relation("OwnerGyms")
+  mobileNumber   String?       @unique
+  email          String?       @unique
+  role           Role          @default(USER)
+  gyms           Gym[]         @relation("OwnerGyms")
   bookings       Booking[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  attendances    Attendance[]  // 👈 Added relation
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Gym {
-  id             String      @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
   description    String?
   address        String
@@ -29,40 +30,54 @@ model Gym {
   pincode        String
   images         String[]
   ownerId        String
-  owner          User        @relation("OwnerGyms", fields: [ownerId], references: [id])
+  owner          User          @relation("OwnerGyms", fields: [ownerId], references: [id])
   bookings       Booking[]
+  attendances    Attendance[]  // 👈 Added relation
   pricePerDay    Float
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Booking {
-  id             String     @id @default(cuid())
+  id             String        @id @default(cuid())
   userId         String
   gymId          String
   startDate      DateTime
   endDate        DateTime
-  status         BookingStatus  @default(PENDING)
+  status         BookingStatus @default(PENDING)
   qrCode         String?
-  paymentId      String?        @unique
-  user           User           @relation(fields: [userId], references: [id])
-  gym            Gym            @relation(fields: [gymId], references: [id])
+  paymentId      String?       @unique
+  user           User          @relation(fields: [userId], references: [id])
+  gym            Gym           @relation(fields: [gymId], references: [id])
   payment        Payment?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Payment {
-  id             String      @id @default(cuid())
-  bookingId      String      @unique
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
   amount         Float
-  currency       String      @default("INR")
+  currency       String        @default("INR")
   paymentStatus  PaymentStatus @default(PENDING)
   provider       String?
-  transactionId  String?     @unique
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  booking        Booking     @relation(fields: [bookingId], references: [id])
+  transactionId  String?       @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+}
+
+model Attendance {
+  id           String     @id @default(cuid())
+  userId       String
+  gymId        String
+  scannedAt    DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  
+  user         User       @relation(fields: [userId], references: [id])
+  gym          Gym        @relation(fields: [gymId], references: [id])
+
+  @@unique([userId, gymId, scannedAt])
 }
 
 enum Role {

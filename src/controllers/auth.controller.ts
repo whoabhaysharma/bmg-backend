@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { auth } from '../config/firebase.js';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma.js';
 
 interface FirebaseAuthRequest {
   firebaseToken: string; // ID token from Firebase

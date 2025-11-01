@@ -33,7 +33,8 @@
     "morgan": "^1.10.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

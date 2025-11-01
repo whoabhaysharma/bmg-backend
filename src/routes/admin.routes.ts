@@ -2,6 +2,6 @@ import { Router } from 'express';
 
 const router = Router();
 
-// Define gym routes here
+// Define admin routes here
 
 export default router;

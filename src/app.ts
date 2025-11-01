@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
-import { errorHandler } from './middleware/errorHandler';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -21,8 +20,5 @@ app.use(morgan('dev'));
 // TODO: Add routes here
 // app.use('/api/auth', authRouter);
 // app.use('/api/users', usersRouter);
-
-// Error handling
-app.use(errorHandler);
 
 export default app;

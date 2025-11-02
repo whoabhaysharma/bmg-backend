@@ -33,16 +33,29 @@ export const getMyProfile = async (
 
     if (!user) {
       logger.warn(`User not found for id: ${req.user.userId}`);
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        data: null,
+        error: 'User not found',
+      });
     }
 
     const roles = user.userRoles.map((userRole) => userRole.role);
     const userProfile = { ...user, userRoles: roles };
 
-    res.json(userProfile);
+    logger.info(`Successfully fetched profile for user ${req.user.userId}`);
+    res.status(200).json({
+      success: true,
+      data: userProfile,
+      error: null,
+    });
   } catch (error) {
     logger.error(`Error fetching profile for user ${req.user.userId}: ${error}`);
-    next(error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Internal server error',
+    });
   }
 };
 
@@ -61,7 +74,9 @@ export const updateMyProfile = async (
       if (!Array.isArray(roles) || roles.length === 0) {
         logger.warn(`Invalid roles format for user ${req.user.userId}`);
         return res.status(400).json({
-          message: 'Roles must be a non-empty array',
+          success: false,
+          data: null,
+          error: 'Roles must be a non-empty array',
         });
       }
 
@@ -71,7 +86,9 @@ export const updateMyProfile = async (
       if (invalidRoles.length > 0) {
         logger.warn(`Invalid roles provided for user ${req.user.userId}: ${invalidRoles.join(', ')}`);
         return res.status(400).json({
-          message: `Invalid roles: ${invalidRoles.join(', ')}. Valid roles are: ${validRoles.join(', ')}`,
+          success: false,
+          data: null,
+          error: `Invalid roles: ${invalidRoles.join(', ')}. Valid roles are: ${validRoles.join(', ')}`,
         });
       }
 
@@ -117,9 +134,18 @@ export const updateMyProfile = async (
     const rolesList = updatedUser.userRoles.map((userRole) => userRole.role);
     const userProfile = { ...updatedUser, userRoles: rolesList };
 
-    res.json(userProfile);
+    logger.info(`Successfully updated profile for user ${req.user.userId}`);
+    res.status(200).json({
+      success: true,
+      data: userProfile,
+      error: null,
+    });
   } catch (error) {
     logger.error(`Error updating profile for user ${req.user.userId}: ${error}`);
-    next(error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Internal server error',
+    });
   }
 };

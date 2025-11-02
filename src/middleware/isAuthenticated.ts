@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
+  user: {
     id: string;
     roles: string[];
     email: string;
@@ -21,7 +21,7 @@ export const isAuthenticated = async (
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'No token provided or invalid token format'
+        message: 'No token provided or invalid token format',
       });
     }
 
@@ -36,12 +36,12 @@ export const isAuthenticated = async (
 
       // Attach the user information to the request object
       req.user = decoded;
-      
+
       next();
     } catch (error) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'Invalid or expired token'
+        message: 'Invalid or expired token',
       });
     }
   } catch (error) {

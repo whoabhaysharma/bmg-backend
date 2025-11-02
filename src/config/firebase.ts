@@ -15,7 +15,7 @@ if (!serviceAccount.type) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  projectId: process.env.FIREBASE_PROJECT_ID
+  projectId: process.env.FIREBASE_PROJECT_ID,
 });
 
 export const auth = admin.auth();

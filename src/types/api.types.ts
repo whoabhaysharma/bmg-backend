@@ -13,11 +13,11 @@ export interface UserWithRoles extends User {
   userRoles: UserRole[];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
-  error?: any;
+  error?: string;
 }
 
 export interface PaginatedResponse<T> extends ApiResponse {

@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import prisma from '../lib/prisma';
 
 // Get my profile
 export const getMyProfile = async (
@@ -8,7 +9,26 @@ export const getMyProfile = async (
   next: NextFunction
 ) => {
   try {
-    
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        mobileNumber: true,
+        googleId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
   } catch (error) {
     next(error);
   }
@@ -21,7 +41,19 @@ export const updateMyProfile = async (
   next: NextFunction
 ) => {
   try {
-    
+    const { name, mobileNumber } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        name,
+        mobileNumber,
+      },
+    });
+
+    res.json(updatedUser);
   } catch (error) {
     next(error);
   }

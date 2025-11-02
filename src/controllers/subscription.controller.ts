@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 
 // Get my subscriptions
@@ -8,7 +8,6 @@ export const getMySubscriptions = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -21,7 +20,6 @@ export const subscribe = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -34,7 +32,6 @@ export const cancelSubscription = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }

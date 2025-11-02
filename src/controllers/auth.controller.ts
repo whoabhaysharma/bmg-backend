@@ -23,7 +23,10 @@ export const googleAuth = async (
     }
 
     // Find or create user
-    let user = await prisma.user.findUnique({ where: { email }, include: { userRoles: true } });
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: { userRoles: true },
+    });
     const isNewUser = !user;
 
     if (!user) {
@@ -64,7 +67,7 @@ export const googleAuth = async (
         name: user.name,
         googleId: user.googleId,
         roles: isNewUser ? [] : user.userRoles.map((userRole) => userRole.role),
-      }
+      },
     });
   } catch (error) {
     next(error);

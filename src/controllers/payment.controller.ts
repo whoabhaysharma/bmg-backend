@@ -8,7 +8,6 @@ export const getMyPayments = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -21,7 +20,6 @@ export const handleWebhook = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }

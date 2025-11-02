@@ -1,5 +1,4 @@
-import { /* Request, */ Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { NextFunction } from 'express';
 
 // Get gyms owned by me
 export const getMyGyms = async (
@@ -8,7 +7,6 @@ export const getMyGyms = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -21,7 +19,6 @@ export const createGym = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -34,7 +31,6 @@ export const updateGym = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -47,7 +43,6 @@ export const createPlan = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -60,7 +55,6 @@ export const updatePlan = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -73,7 +67,6 @@ export const getGymSubscribers = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -86,7 +79,6 @@ export const getGymAttendance = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }
@@ -99,7 +91,6 @@ export const checkInUser = async (
   next: NextFunction
 ) => {
   try {
-    
   } catch (error) {
     next(error);
   }

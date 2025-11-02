@@ -10,14 +10,14 @@ export const isOwner = async (
     if (!req.user) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'Authentication required'
+        message: 'Authentication required',
       });
     }
 
     if (!req.user.roles.includes('OWNER')) {
       return res.status(403).json({
         error: 'Forbidden',
-        message: 'Owner access required'
+        message: 'Owner access required',
       });
     }
 

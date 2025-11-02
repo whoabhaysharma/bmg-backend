@@ -10,14 +10,14 @@ export const isAdmin = async (
     if (!req.user) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'Authentication required'
+        message: 'Authentication required',
       });
     }
 
     if (!req.user.roles.includes('ADMIN')) {
       return res.status(403).json({
         error: 'Forbidden',
-        message: 'Admin access required'
+        message: 'Admin access required',
       });
     }
 

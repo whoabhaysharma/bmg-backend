@@ -9,9 +9,10 @@ export const getMyProfile = async (
   next: NextFunction
 ) => {
   try {
+    console.log(req.user, '----------')
     const user = await prisma.user.findUnique({
       where: {
-        id: req.user.id,
+        id: req.user.userId,
       },
       select: {
         id: true,
@@ -33,7 +34,10 @@ export const getMyProfile = async (
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    const roles = user.userRoles.map((userRole) => userRole.role);
+    const userProfile = { ...user, userRoles: roles };
+
+    res.json(userProfile);
   } catch (error) {
     next(error);
   }
@@ -46,6 +50,7 @@ export const updateMyProfile = async (
   next: NextFunction
 ) => {
   try {
+    console.log(req.body, '----------')
     const { name, mobileNumber, roles } = req.body;
 
     // Validate roles if provided
@@ -68,13 +73,13 @@ export const updateMyProfile = async (
       // Remove all existing roles and create new ones
       await prisma.userRole.deleteMany({
         where: {
-          userId: req.user.id,
+          userId: req.user.userId,
         },
       });
 
       await prisma.userRole.createMany({
         data: roles.map((role) => ({
-          userId: req.user.id,
+          userId: req.user.userId,
           role,
         })),
       });
@@ -82,7 +87,7 @@ export const updateMyProfile = async (
 
     const updatedUser = await prisma.user.update({
       where: {
-        id: req.user.id,
+        id: req.user.userId,
       },
       data: {
         name,
@@ -104,7 +109,10 @@ export const updateMyProfile = async (
       },
     });
 
-    res.json(updatedUser);
+    const rolesList = updatedUser.userRoles.map((userRole) => userRole.role);
+    const userProfile = { ...updatedUser, userRoles: rolesList };
+
+    res.json(userProfile);
   } catch (error) {
     next(error);
   }

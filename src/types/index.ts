@@ -1,4 +1,4 @@
-import { Role, BookingStatus, PaymentStatus } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { Request } from 'express';
 
 export interface CreateUserInput {

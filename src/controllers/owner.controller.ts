@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { /* Request, */ Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 
 // Get gyms owned by me
 export const getMyGyms = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -16,8 +16,8 @@ export const getMyGyms = async (
 
 // Create a new gym
 export const createGym = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -29,8 +29,8 @@ export const createGym = async (
 
 // Update my gym
 export const updateGym = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -42,8 +42,8 @@ export const updateGym = async (
 
 // Create a subscription plan
 export const createPlan = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -55,8 +55,8 @@ export const createPlan = async (
 
 // Update a subscription plan
 export const updatePlan = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -68,8 +68,8 @@ export const updatePlan = async (
 
 // Get gym subscribers
 export const getGymSubscribers = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -81,8 +81,8 @@ export const getGymSubscribers = async (
 
 // Get gym attendance
 export const getGymAttendance = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {
@@ -94,8 +94,8 @@ export const getGymAttendance = async (
 
 // Check in a user
 export const checkInUser = async (
-  req: AuthenticatedRequest,
-  res: Response,
+  /* req: AuthenticatedRequest, */
+  /* res: Response, */
   next: NextFunction
 ) => {
   try {

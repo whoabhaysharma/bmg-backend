@@ -1,10 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { NextFunction } from 'express';
 
 // Get all gyms
 export const getAllGyms = async (
-  req: AuthenticatedRequest,
-  res: Response,
   next: NextFunction
 ) => {
   try {
@@ -16,8 +13,6 @@ export const getAllGyms = async (
 
 // Get a single gym
 export const getGym = async (
-  req: AuthenticatedRequest,
-  res: Response,
   next: NextFunction
 ) => {
   try {
@@ -29,8 +24,6 @@ export const getGym = async (
 
 // Get gym's subscription plans
 export const getGymPlans = async (
-  req: AuthenticatedRequest,
-  res: Response,
   next: NextFunction
 ) => {
   try {

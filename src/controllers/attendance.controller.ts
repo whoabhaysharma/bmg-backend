@@ -1,10 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { NextFunction } from 'express';
 
 // Get my attendance history
 export const getMyAttendance = async (
-  req: AuthenticatedRequest,
-  res: Response,
   next: NextFunction
 ) => {
   try {

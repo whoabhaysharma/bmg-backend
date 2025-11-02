@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 import prisma from '../lib/prisma';
+import logger from '../lib/logger';
 
 // Get my profile
 export const getMyProfile = async (
@@ -8,8 +9,8 @@ export const getMyProfile = async (
   res: Response,
   next: NextFunction
 ) => {
+  logger.info(`Fetching profile for user ${req.user.userId}`);
   try {
-    console.log(req.user, '----------')
     const user = await prisma.user.findUnique({
       where: {
         id: req.user.userId,
@@ -31,6 +32,7 @@ export const getMyProfile = async (
     });
 
     if (!user) {
+      logger.warn(`User not found for id: ${req.user.userId}`);
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -39,6 +41,7 @@ export const getMyProfile = async (
 
     res.json(userProfile);
   } catch (error) {
+    logger.error(`Error fetching profile for user ${req.user.userId}: ${error}`);
     next(error);
   }
 };
@@ -49,13 +52,14 @@ export const updateMyProfile = async (
   res: Response,
   next: NextFunction
 ) => {
+  logger.info(`Updating profile for user ${req.user.userId}`);
   try {
-    console.log(req.body, '----------')
     const { name, mobileNumber, roles } = req.body;
 
     // Validate roles if provided
     if (roles) {
       if (!Array.isArray(roles) || roles.length === 0) {
+        logger.warn(`Invalid roles format for user ${req.user.userId}`);
         return res.status(400).json({
           message: 'Roles must be a non-empty array',
         });
@@ -65,6 +69,7 @@ export const updateMyProfile = async (
       const invalidRoles = roles.filter((role) => !validRoles.includes(role));
 
       if (invalidRoles.length > 0) {
+        logger.warn(`Invalid roles provided for user ${req.user.userId}: ${invalidRoles.join(', ')}`);
         return res.status(400).json({
           message: `Invalid roles: ${invalidRoles.join(', ')}. Valid roles are: ${validRoles.join(', ')}`,
         });
@@ -114,6 +119,7 @@ export const updateMyProfile = async (
 
     res.json(userProfile);
   } catch (error) {
+    logger.error(`Error updating profile for user ${req.user.userId}: ${error}`);
     next(error);
   }
 };

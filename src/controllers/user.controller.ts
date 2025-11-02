@@ -56,7 +56,7 @@ export const updateMyProfile = async (
         });
       }
 
-      const validRoles = ['OWNER', 'SUBSCRIBER', 'USER'];
+      const validRoles = ['OWNER', 'USER'];
       const invalidRoles = roles.filter((role) => !validRoles.includes(role));
 
       if (invalidRoles.length > 0) {

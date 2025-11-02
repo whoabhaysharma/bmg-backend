@@ -104,7 +104,6 @@ model UserRole {
 enum Role {
   ADMIN
   OWNER
-  SUBSCRIBER
   USER
 }
 

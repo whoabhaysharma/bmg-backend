@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
+import logger from '../lib/logger';
 
 export interface AuthenticatedRequest extends Request {
   user: {
@@ -16,6 +17,7 @@ export const isAuthenticated = async (
   next: NextFunction
 ) => {
   try {
+    logger.info('Authenticating request');
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -36,15 +38,18 @@ export const isAuthenticated = async (
 
       // Attach the user information to the request object
       req.user = decoded;
+      logger.info('User authenticated:', { user: req.user });
 
       next();
     } catch (error) {
+      logger.error('Error verifying token:', { error });
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid or expired token',
       });
     }
   } catch (error) {
+    logger.error('Error in isAuthenticated middleware:', { error });
     next(error);
   }
 };

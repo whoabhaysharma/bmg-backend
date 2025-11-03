@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './isAuthenticated';
+import logger from '../lib/logger';
 
 export const isAdmin = async (
   req: AuthenticatedRequest,
@@ -7,6 +8,7 @@ export const isAdmin = async (
   next: NextFunction
 ) => {
   try {
+    logger.info('Checking admin access for user:', { user: req.user });
     if (!req.user) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -23,6 +25,7 @@ export const isAdmin = async (
 
     next();
   } catch (error) {
+    logger.error('Error in isAdmin middleware:', { error });
     next(error);
   }
 };

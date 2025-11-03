@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './isAuthenticated';
+import logger from '../lib/logger';
 
 export const isOwner = async (
   req: AuthenticatedRequest,
@@ -7,6 +8,7 @@ export const isOwner = async (
   next: NextFunction
 ) => {
   try {
+    logger.info('Checking owner access for user:', { user: req.user });
     if (!req.user) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -23,6 +25,7 @@ export const isOwner = async (
 
     next();
   } catch (error) {
+    logger.error('Error in isOwner middleware:', { error });
     next(error);
   }
 };

@@ -8,13 +8,13 @@ export const getMyAttendance = async (
   res: Response,
   next: NextFunction
 ) => {
-  logger.info(`Fetching attendance history for user ${req.user.userId}`);
+  logger.info(`Fetching attendance history for user ${req.user.id}`);
   try {
     // TODO: Implement logic to fetch user's attendance history
     res.json({ message: 'Not implemented' });
   } catch (error) {
     logger.error(
-      `Error fetching attendance history for user ${req.user.userId}`,
+      `Error fetching attendance history for user ${req.user.id}`,
       error
     );
     next(error);

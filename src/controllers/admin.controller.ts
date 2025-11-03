@@ -2,7 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import logger from '../lib/logger';
 
 // Get all users
-export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   logger.info('Fetching all users');
   try {
     // TODO: Implement logic to fetch all users
@@ -14,7 +18,11 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 };
 
 // Assign role to user
-export const assignRole = async (req: Request, res: Response, next: NextFunction) => {
+export const assignRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { userId, role } = req.body;
   logger.info(`Assigning role ${role} to user ${userId}`);
   try {
@@ -27,7 +35,11 @@ export const assignRole = async (req: Request, res: Response, next: NextFunction
 };
 
 // Remove role from user
-export const removeRole = async (req: Request, res: Response, next: NextFunction) => {
+export const removeRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { userId, role } = req.body;
   logger.info(`Removing role ${role} from user ${userId}`);
   try {
@@ -40,7 +52,11 @@ export const removeRole = async (req: Request, res: Response, next: NextFunction
 };
 
 // Delete gym
-export const deleteGym = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteGym = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
   logger.info(`Deleting gym ${id}`);
   try {

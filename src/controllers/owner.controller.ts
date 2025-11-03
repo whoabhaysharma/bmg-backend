@@ -8,7 +8,7 @@ export const getMyGyms = async (
   res: Response,
   next: NextFunction
 ) => {
-  logger.info(`Fetching gyms for owner ${req.user.userId}`);
+  logger.info(`Fetching gyms for owner ${req.user.id}`);
   try {
     // TODO: Implement logic to fetch gyms owned by the user
     res.json({ message: 'Not implemented' });
@@ -46,7 +46,10 @@ export const updateGym = async (
     // TODO: Implement logic to update a gym
     res.json({ message: 'Not implemented' });
   } catch (error) {
-    logger.error(`Error updating gym ${id} for owner ${req.user.userId}`, error);
+    logger.error(
+      `Error updating gym ${id} for owner ${req.user.userId}`,
+      error
+    );
     next(error);
   }
 };
@@ -83,7 +86,10 @@ export const updatePlan = async (
     // TODO: Implement logic to update a subscription plan
     res.json({ message: 'Not implemented' });
   } catch (error) {
-    logger.error(`Error updating plan ${id} by owner ${req.user.userId}`, error);
+    logger.error(
+      `Error updating plan ${id} by owner ${req.user.userId}`,
+      error
+    );
     next(error);
   }
 };

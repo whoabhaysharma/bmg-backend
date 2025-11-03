@@ -13,7 +13,10 @@ export const getMySubscriptions = async (
     // TODO: Implement logic to fetch user's subscriptions
     res.json({ message: 'Not implemented' });
   } catch (error) {
-    logger.error(`Error fetching subscriptions for user ${req.user.userId}`, error);
+    logger.error(
+      `Error fetching subscriptions for user ${req.user.userId}`,
+      error
+    );
     next(error);
   }
 };
@@ -30,7 +33,10 @@ export const subscribe = async (
     // TODO: Implement logic to subscribe user to a plan
     res.json({ message: 'Not implemented' });
   } catch (error) {
-    logger.error(`Error subscribing user ${req.user.userId} to plan ${planId}`, error);
+    logger.error(
+      `Error subscribing user ${req.user.userId} to plan ${planId}`,
+      error
+    );
     next(error);
   }
 };
@@ -42,7 +48,9 @@ export const cancelSubscription = async (
   next: NextFunction
 ) => {
   const { subscriptionId } = req.params;
-  logger.info(`User ${req.user.userId} canceling subscription ${subscriptionId}`);
+  logger.info(
+    `User ${req.user.userId} canceling subscription ${subscriptionId}`
+  );
   try {
     // TODO: Implement logic to cancel a subscription
     res.json({ message: 'Not implemented' });

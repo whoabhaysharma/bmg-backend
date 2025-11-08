@@ -71,8 +71,6 @@ export const getMyProfile: RequestHandler = async (req, res) => {
 };
 
 
-// Update my profile (with optional roles)
-
 export const updateMyProfile: RequestHandler = async (req, res) => {
   const user = (req as AuthenticatedRequest).user;
   logger.info({ msg: 'Updating user profile', userId: user?.id });

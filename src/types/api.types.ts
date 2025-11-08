@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Role, UserRole } from '@prisma/client';
+import { User, Role, UserRole, Payment } from '@prisma/client';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -30,4 +30,43 @@ export interface PaginatedResponse<T> extends ApiResponse {
 export interface TokenPayload {
   userId: string;
   email: string;
+}
+
+export interface ProcessPaymentRequest {
+  method: string;
+}
+
+export interface ProcessPaymentResponse extends ApiResponse<Payment> {}
+
+export interface PaymentHistoryResponse extends ApiResponse<Payment[]> {
+  data: (Payment & {
+    subscription: {
+      gym: {
+        id: string;
+        name: string;
+      };
+      plan: {
+        id: string;
+        name: string;
+        price: number;
+      };
+    };
+  })[];
+}
+
+export interface GymPaymentHistoryResponse extends ApiResponse<Payment[]> {
+  data: (Payment & {
+    subscription: {
+      user: {
+        id: string;
+        name: string;
+        email: string;
+      };
+      plan: {
+        id: string;
+        name: string;
+        price: number;
+      };
+    };
+  })[];
 }

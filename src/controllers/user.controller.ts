@@ -1,18 +1,16 @@
 
-import { Response } from 'express';
+import type { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 
 // Get my profile
 
-export const getMyProfile = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  logger.info({ msg: 'Fetching user profile', userId: req.user?.id });
-  if (!req.user || !req.user.id) {
-    logger.error({ msg: 'Missing user id in request', user: req.user });
+export const getMyProfile: RequestHandler = async (req, res) => {
+  const user = (req as AuthenticatedRequest).user;
+  logger.info({ msg: 'Fetching user profile', userId: user?.id });
+  if (!user || !user.id) {
+    logger.error({ msg: 'Missing user id in request', user });
     return res.status(401).json({
       success: false,
       data: null,
@@ -20,9 +18,9 @@ export const getMyProfile = async (
     });
   }
   try {
-    const user = await prisma.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: {
-        id: req.user.id,
+        id: user.id,
       },
       select: {
         id: true,
@@ -40,8 +38,8 @@ export const getMyProfile = async (
       },
     });
 
-    if (!user) {
-      logger.warn({ msg: 'User not found', userId: req.user.id });
+    if (!dbUser) {
+      logger.warn({ msg: 'User not found', userId: user.id });
       return res.status(404).json({
         success: false,
         data: null,
@@ -49,10 +47,10 @@ export const getMyProfile = async (
       });
     }
 
-    const roles = user.userRoles.map((userRole: { role: string }) => userRole.role);
-    const userProfile = { ...user, userRoles: roles };
+    const roles = dbUser.userRoles.map((userRole: { role: string }) => userRole.role);
+    const userProfile = { ...dbUser, userRoles: roles };
 
-    logger.info({ msg: 'Successfully fetched user profile', userId: req.user.id, rolesCount: roles.length });
+    logger.info({ msg: 'Successfully fetched user profile', userId: user.id, rolesCount: roles.length });
     return res.status(200).json({
       success: true,
       data: userProfile,
@@ -61,7 +59,7 @@ export const getMyProfile = async (
   } catch (error) {
     logger.error({
       msg: 'Error fetching user profile',
-      userId: req.user.id,
+      userId: user.id,
       error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
     });
     return res.status(500).json({
@@ -72,15 +70,14 @@ export const getMyProfile = async (
   }
 };
 
+
 // Update my profile (with optional roles)
 
-export const updateMyProfile = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  logger.info({ msg: 'Updating user profile', userId: req.user?.id });
-  if (!req.user || !req.user.id) {
-    logger.error({ msg: 'Missing user id in request', user: req.user });
+export const updateMyProfile: RequestHandler = async (req, res) => {
+  const user = (req as AuthenticatedRequest).user;
+  logger.info({ msg: 'Updating user profile', userId: user?.id });
+  if (!user || !user.id) {
+    logger.error({ msg: 'Missing user id in request', user });
     return res.status(401).json({
       success: false,
       data: null,
@@ -93,7 +90,7 @@ export const updateMyProfile = async (
     // Validate roles if provided
     if (roles) {
       if (!Array.isArray(roles) || roles.length === 0) {
-        logger.warn({ msg: 'Invalid roles format', userId: req.user.id, providedRoles: roles });
+        logger.warn({ msg: 'Invalid roles format', userId: user.id, providedRoles: roles });
         return res.status(400).json({
           success: false,
           data: null,
@@ -107,7 +104,7 @@ export const updateMyProfile = async (
       if (invalidRoles.length > 0) {
         logger.warn({
           msg: 'Invalid roles provided',
-          userId: req.user.id,
+          userId: user.id,
           invalidRoles: invalidRoles,
         });
         return res.status(400).json({
@@ -120,23 +117,23 @@ export const updateMyProfile = async (
       // Remove all existing roles and create new ones
       await prisma.userRole.deleteMany({
         where: {
-          userId: req.user.id,
+          userId: user.id,
         },
       });
 
       // Ensure roles are cast to the correct enum type if needed
       await prisma.userRole.createMany({
         data: roles.map((role: string) => ({
-          userId: req.user.id,
+          userId: user.id,
           role: role as any, // Cast to 'any' to bypass type error, or use 'as Role' if Role enum is imported
         })),
       });
-      logger.info({ msg: 'Replaced user roles', userId: req.user.id, newRoles: roles });
+      logger.info({ msg: 'Replaced user roles', userId: user.id, newRoles: roles });
     }
 
     const updatedUser = await prisma.user.update({
       where: {
-        id: req.user.id,
+        id: user.id,
       },
       data: {
         name,
@@ -161,7 +158,7 @@ export const updateMyProfile = async (
     const rolesList = updatedUser.userRoles.map((userRole: { role: string }) => userRole.role);
     const userProfile = { ...updatedUser, userRoles: rolesList };
 
-    logger.info({ msg: 'Successfully updated user profile', userId: req.user.id, rolesCount: rolesList.length });
+    logger.info({ msg: 'Successfully updated user profile', userId: user.id, rolesCount: rolesList.length });
     return res.status(200).json({
       success: true,
       data: userProfile,
@@ -170,7 +167,7 @@ export const updateMyProfile = async (
   } catch (error) {
     logger.error({
       msg: 'Error updating user profile',
-      userId: req.user.id,
+      userId: user.id,
       error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
     });
     return res.status(500).json({

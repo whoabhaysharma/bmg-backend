@@ -1,21 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
 
 export interface AuthenticatedRequest extends Request {
-  user: {
+  user?: {
     id: string;
     roles: string[];
     email: string;
   };
 }
 
-export const isAuthenticated = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  const authReq = req as AuthenticatedRequest;
   try {
     logger.info('Authenticating request');
     const authHeader = req.headers.authorization;
@@ -36,15 +33,15 @@ export const isAuthenticated = async (
         email: string;
       };
 
-      // Attach the user information to the request object and map userId to id
-      req.user = {
+      authReq.user = {
         id: decoded.userId,
         roles: decoded.roles,
-        email: decoded.email
+        email: decoded.email,
       };
-      logger.info('User authenticated:', { user: req.user });
 
-      next();
+      logger.info('User authenticated', { user: authReq.user });
+
+      return next();
     } catch (error) {
       logger.error('Error verifying token:', { error });
       return res.status(401).json({
@@ -54,6 +51,6 @@ export const isAuthenticated = async (
     }
   } catch (error) {
     logger.error('Error in isAuthenticated middleware:', { error });
-    next(error);
+    return next(error);
   }
 };

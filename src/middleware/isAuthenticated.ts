@@ -40,6 +40,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       };
 
       logger.info('User authenticated', { user: authReq.user });
+      logger.info("Decoded token:", { decoded });
 
       return next();
     } catch (error) {

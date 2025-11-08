@@ -1,13 +1,30 @@
-import { Response } from 'express';
+import { Response, Request, RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 
+// Helper function to safely access user from request
+const getAuthUser = (req: Request) => {
+  const authReq = req as AuthenticatedRequest;
+  return authReq.user;
+};
+
 // Create a new gym
-export const createGym = async (req: AuthenticatedRequest, res: Response) => {
+export const createGym: RequestHandler = async (req, res) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { name, address } = req.body;
-    const ownerId = req.user.id; // Use req.user.id as per AuthenticatedRequest
+    
+    if (!authReq.user?.id) {
+      logger.error('User ID not found in request');
+      return res.status(401).json({
+        success: false,
+        data: null,
+        error: 'User not authenticated',
+      });
+    }
+    
+    const ownerId = authReq.user.id;
 
     // Only OWNER role can create gym (enforced by isOwner middleware in routes)
     const gym = await prisma.gym.create({
@@ -35,8 +52,9 @@ export const createGym = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Get all gyms
-export const getAllGyms = async (req: AuthenticatedRequest, res: Response) => {
-  logger.info('Fetching all gyms');
+export const getAllGyms: RequestHandler = async (req, res) => {
+  const user = getAuthUser(req);
+  logger.info('Fetching all gyms', { userId: user?.id });
   try {
     const gyms = await prisma.gym.findMany({
       include: {
@@ -111,12 +129,22 @@ export const getGymById = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Update a gym
-export const updateGym = async (req: AuthenticatedRequest, res: Response) => {
+export const updateGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
-  logger.info(`Updating gym with id: ${id}`);
+  const user = getAuthUser(req);
+  
+  if (!user?.id) {
+    return res.status(401).json({
+      success: false,
+      data: null,
+      error: 'User not authenticated',
+    });
+  }
+
+  logger.info(`Updating gym with id: ${id}`, { userId: user.id });
   try {
     const { name, address } = req.body;
-    const ownerId = req.user.id;
+    const ownerId = user.id;
 
     const gym = await prisma.gym.findUnique({
       where: { id },
@@ -162,11 +190,21 @@ export const updateGym = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Delete a gym
-export const deleteGym = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
-  logger.info(`Deleting gym with id: ${id}`);
+  const user = getAuthUser(req);
+  
+  if (!user?.id) {
+    return res.status(401).json({
+      success: false,
+      data: null,
+      error: 'User not authenticated',
+    });
+  }
+
+  logger.info(`Deleting gym with id: ${id}`, { userId: user.id });
   try {
-    const ownerId = req.user.id;
+    const ownerId = user.id;
     const gym = await prisma.gym.findUnique({
       where: { id },
     });

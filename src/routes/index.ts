@@ -5,8 +5,6 @@ import gymRoutes from './gym.routes';
 import subscriptionRoutes from './subscription.routes';
 import paymentRoutes from './payment.routes';
 import attendanceRoutes from './attendance.routes';
-import ownerRoutes from './owner.routes';
-import adminRoutes from './admin.routes';
 
 const router = Router();
 
@@ -19,9 +17,5 @@ router.use('/gyms', gymRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);
-
-// Role-specific routes
-router.use('/owner', ownerRoutes);
-router.use('/admin', adminRoutes);
 
 export default router;

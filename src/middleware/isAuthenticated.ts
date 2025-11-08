@@ -31,13 +31,17 @@ export const isAuthenticated = async (
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as {
-        id: string;
+        userId: string;
         roles: string[];
         email: string;
       };
 
-      // Attach the user information to the request object
-      req.user = decoded;
+      // Attach the user information to the request object and map userId to id
+      req.user = {
+        id: decoded.userId,
+        roles: decoded.roles,
+        email: decoded.email
+      };
       logger.info('User authenticated:', { user: req.user });
 
       next();

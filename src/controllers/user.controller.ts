@@ -10,7 +10,15 @@ export const getMyProfile = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  logger.info(`Fetching profile for user ${req.user.id}`);
+  logger.info({ msg: 'Fetching user profile', userId: req.user?.id });
+  if (!req.user || !req.user.id) {
+    logger.error({ msg: 'Missing user id in request', user: req.user });
+    return res.status(401).json({
+      success: false,
+      data: null,
+      error: 'Unauthorized: user id missing',
+    });
+  }
   try {
     const user = await prisma.user.findUnique({
       where: {
@@ -33,7 +41,7 @@ export const getMyProfile = async (
     });
 
     if (!user) {
-      logger.warn(`User not found for id: ${req.user.id}`);
+      logger.warn({ msg: 'User not found', userId: req.user.id });
       return res.status(404).json({
         success: false,
         data: null,
@@ -44,14 +52,18 @@ export const getMyProfile = async (
     const roles = user.userRoles.map((userRole: { role: string }) => userRole.role);
     const userProfile = { ...user, userRoles: roles };
 
-    logger.info(`Successfully fetched profile for user ${req.user.id}`);
+    logger.info({ msg: 'Successfully fetched user profile', userId: req.user.id, rolesCount: roles.length });
     return res.status(200).json({
       success: true,
       data: userProfile,
       error: null,
     });
   } catch (error) {
-    logger.error(`Error fetching profile for user ${req.user.id}: ${error}`);
+    logger.error({
+      msg: 'Error fetching user profile',
+      userId: req.user.id,
+      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+    });
     return res.status(500).json({
       success: false,
       data: null,
@@ -66,14 +78,22 @@ export const updateMyProfile = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  logger.info(`Updating profile for user ${req.user.id}`);
+  logger.info({ msg: 'Updating user profile', userId: req.user?.id });
+  if (!req.user || !req.user.id) {
+    logger.error({ msg: 'Missing user id in request', user: req.user });
+    return res.status(401).json({
+      success: false,
+      data: null,
+      error: 'Unauthorized: user id missing',
+    });
+  }
   try {
     const { name, mobileNumber, roles } = req.body;
 
     // Validate roles if provided
     if (roles) {
       if (!Array.isArray(roles) || roles.length === 0) {
-        logger.warn(`Invalid roles format for user ${req.user.id}`);
+        logger.warn({ msg: 'Invalid roles format', userId: req.user.id, providedRoles: roles });
         return res.status(400).json({
           success: false,
           data: null,
@@ -85,9 +105,11 @@ export const updateMyProfile = async (
       const invalidRoles = roles.filter((role: string) => !validRoles.includes(role));
 
       if (invalidRoles.length > 0) {
-        logger.warn(
-          `Invalid roles provided for user ${req.user.id}: ${invalidRoles.join(', ')}`
-        );
+        logger.warn({
+          msg: 'Invalid roles provided',
+          userId: req.user.id,
+          invalidRoles: invalidRoles,
+        });
         return res.status(400).json({
           success: false,
           data: null,
@@ -109,6 +131,7 @@ export const updateMyProfile = async (
           role: role as any, // Cast to 'any' to bypass type error, or use 'as Role' if Role enum is imported
         })),
       });
+      logger.info({ msg: 'Replaced user roles', userId: req.user.id, newRoles: roles });
     }
 
     const updatedUser = await prisma.user.update({
@@ -138,14 +161,18 @@ export const updateMyProfile = async (
     const rolesList = updatedUser.userRoles.map((userRole: { role: string }) => userRole.role);
     const userProfile = { ...updatedUser, userRoles: rolesList };
 
-    logger.info(`Successfully updated profile for user ${req.user.id}`);
+    logger.info({ msg: 'Successfully updated user profile', userId: req.user.id, rolesCount: rolesList.length });
     return res.status(200).json({
       success: true,
       data: userProfile,
       error: null,
     });
   } catch (error) {
-    logger.error(`Error updating profile for user ${req.user.id}: ${error}`);
+    logger.error({
+      msg: 'Error updating user profile',
+      userId: req.user.id,
+      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+    });
     return res.status(500).json({
       success: false,
       data: null,

@@ -1,0 +1,126 @@
+{
+  "info": {
+    "name": "Gym Manager API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Gym Manager backend APIs"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users","profile"] }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"mobileNumber\": \"1234567890\",\n  \"roles\": [\"OWNER\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users","profile"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gym",
+      "item": [
+        {
+          "name": "Create Gym",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Gym\",\n  \"address\": \"123 Main St\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/gyms", "host": ["{{baseUrl}}"], "path": ["gyms"] }
+          }
+        },
+        {
+          "name": "Get All Gyms",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" }
+            ],
+            "url": { "raw": "{{baseUrl}}/gyms", "host": ["{{baseUrl}}"], "path": ["gyms"] }
+          }
+        },
+        {
+          "name": "Get Gym By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" }
+            ],
+            "url": { "raw": "{{baseUrl}}/gyms/:id", "host": ["{{baseUrl}}"], "path": ["gyms",":id"] }
+          }
+        },
+        {
+          "name": "Update Gym",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Gym\",\n  \"address\": \"456 New St\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/gyms/:id", "host": ["{{baseUrl}}"], "path": ["gyms",":id"] }
+          }
+        },
+        {
+          "name": "Delete Gym",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer <token>", "type": "text" }
+            ],
+            "url": { "raw": "{{baseUrl}}/gyms/:id", "host": ["{{baseUrl}}"], "path": ["gyms",":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Google Auth",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"<google_id_token>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/google", "host": ["{{baseUrl}}"], "path": ["auth","google"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" }
+  ]
+}

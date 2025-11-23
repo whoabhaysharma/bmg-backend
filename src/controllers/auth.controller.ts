@@ -1,67 +1,95 @@
 import { Request, Response, NextFunction } from 'express';
-import { auth } from '../config/firebase';
 import prisma from '../lib/prisma';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
+import { redis } from '../lib/redis';
 
-export const googleAuth = async (
+// Generate a 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+export const sendOtp = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  logger.info('Processing Google authentication request');
+  logger.info('Processing Send OTP request');
   try {
-    const { firebaseToken } = req.body;
-    if (!firebaseToken) {
-      logger.warn('Firebase token is required, but was not provided.');
-      return res.status(400).json({ message: 'Firebase token is required' });
+    const { phoneNumber } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({ message: 'Phone number is required' });
     }
 
-    // Verify the Firebase ID token
-    logger.info('Verifying Firebase ID token');
-    const decodedToken = await auth.verifyIdToken(firebaseToken);
-    const { email, name, uid } = decodedToken;
-    if (!email) {
-      logger.warn('Email not found in Firebase token');
-      return res.status(400).json({ message: 'Email not found in token' });
+    const otp = generateOTP();
+    const key = `otp:${phoneNumber}`;
+
+    // Store OTP in Redis with 5 minutes expiration (300 seconds)
+    await redis.set(key, otp, { ex: 300 });
+
+    // In a real application, you would send this OTP via SMS provider (e.g., Twilio)
+    // For now, we'll log it to the console for testing
+    logger.info(`Generated OTP for ${phoneNumber}: ${otp}`);
+
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    logger.error('Error sending OTP', error);
+    next(error);
+  }
+};
+
+export const verifyOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  logger.info('Processing Verify OTP request');
+  try {
+    const { phoneNumber, otp } = req.body;
+
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ message: 'Phone number and OTP are required' });
     }
+
+    const key = `otp:${phoneNumber}`;
+    const storedOtp = await redis.get(key);
+
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // OTP verified, delete it from Redis
+    await redis.del(key);
 
     // Find or create user
-    logger.info(`Finding or creating user for email: ${email}`);
     let user = await prisma.user.findUnique({
-      where: { email },
+      where: { mobileNumber: phoneNumber },
       include: { userRoles: true },
     });
+
     const isNewUser = !user;
 
     if (!user) {
-      logger.info(`Creating new user for email: ${email}`);
+      logger.info(`Creating new user for phone: ${phoneNumber}`);
+      // Create a new user with just the mobile number. 
+      // Name and email can be updated later by the user.
       user = await prisma.user.create({
         data: {
-          email,
-          name: name || '',
-          googleId: uid,
+          mobileNumber: phoneNumber,
+          name: '', // Placeholder, user should update profile
         },
-        include: { userRoles: true },
-      });
-    } else if (!user.googleId) {
-      logger.info(`Updating user ${user.id} with Google ID`);
-      user = await prisma.user.update({
-        where: { email },
-        data: { googleId: uid },
         include: { userRoles: true },
       });
     }
 
-    // Sign JWT with empty roles for new users, existing roles for existing users
-    logger.info(`Signing JWT for user ${user.id}`);
+    // Sign JWT
     const token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
         name: user.name,
-        googleId: user.googleId,
         roles: isNewUser ? [] : user.userRoles.map((userRole) => userRole.role),
       },
       JWT_SECRET,
@@ -74,12 +102,13 @@ export const googleAuth = async (
         id: user.id,
         email: user.email,
         name: user.name,
-        googleId: user.googleId,
+        mobileNumber: user.mobileNumber,
         roles: isNewUser ? [] : user.userRoles.map((userRole) => userRole.role),
       },
     });
+
   } catch (error) {
-    logger.error('Error during Google authentication', error);
+    logger.error('Error verifying OTP', error);
     next(error);
   }
 };

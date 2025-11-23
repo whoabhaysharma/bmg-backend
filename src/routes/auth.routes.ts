@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { googleAuth } from '../controllers/auth.controller';
+import { sendOtp, verifyOtp } from '../controllers/auth.controller';
 
 const router = Router();
 
-router.post('/google', googleAuth);
+router.post('/send-otp', sendOtp);
+router.post('/verify-otp', verifyOtp);
 
 export default router;

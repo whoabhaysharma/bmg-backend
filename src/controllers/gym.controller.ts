@@ -83,6 +83,71 @@ export const getAllGyms: RequestHandler = async (req, res) => {
   }
 };
 
+// Get my gyms (where user is owner)
+export const getMyGyms: RequestHandler = async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    
+    if (!authReq.user?.id) {
+      logger.error('User ID not found in request');
+      return res.status(401).json({
+        success: false,
+        data: null,
+        error: 'User not authenticated',
+      });
+    }
+
+    const userId = authReq.user.id;
+    logger.info(`Fetching gyms owned by user: ${userId}`);
+
+    const myGyms = await prisma.gym.findMany({
+      where: {
+        ownerId: userId,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        subscriptionPlans: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            durationInMonths: true,
+            isActive: true,
+          },
+        },
+        subscribers: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    logger.info(`Successfully fetched ${myGyms.length} gyms for user: ${userId}`);
+    res.status(200).json({
+      success: true,
+      data: myGyms,
+      error: null,
+    });
+  } catch (error) {
+    logger.error(`Error fetching user's gyms: ${error}`);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Internal server error',
+    });
+  }
+};
+
 // Get a single gym by ID
 export const getGymById = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;

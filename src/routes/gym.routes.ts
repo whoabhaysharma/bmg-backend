@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createGym,
   getAllGyms,
+  getMyGyms,
   getGymById,
   updateGym,
   deleteGym,
@@ -13,6 +14,7 @@ const router = Router();
 
 router.post('/', isAuthenticated, isOwner, createGym);
 router.get('/', isAuthenticated, getAllGyms);
+router.get('/me/owned', isAuthenticated, getMyGyms);
 router.get('/:id', isAuthenticated, getGymById);
 router.put('/:id', isAuthenticated, isOwner, updateGym);
 router.delete('/:id', isAuthenticated, isOwner, deleteGym);

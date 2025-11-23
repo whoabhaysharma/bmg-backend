@@ -13,9 +13,9 @@ import { validate } from '../middleware/validate';
 
 const router = Router();
 
-// Create a new plan (Owner only)
+// Create a new plan for a gym (Owner only)
 router.post(
-    '/gym/:gymId/plans',
+    '/gym/:gymId',
     isAuthenticated,
     isOwner,
     validate,
@@ -23,17 +23,17 @@ router.post(
 );
 
 // Get all plans for a gym
-router.get('/gym/:gymId/plans', getPlansByGym);
+router.get('/gym/:gymId', getPlansByGym);
 
-// Get all active plans for a gym (public)
-router.get('/gym/:gymId/plans/active', getActivePlansByGym);
+// Get active plans for a gym
+router.get('/gym/:gymId/active', getActivePlansByGym);
 
 // Get a single plan by ID
-router.get('/plans/:planId', getPlanById);
+router.get('/:planId', getPlanById);
 
 // Update a plan (Owner only)
 router.put(
-    '/plans/:planId',
+    '/:planId',
     isAuthenticated,
     isOwner,
     validate,
@@ -42,7 +42,7 @@ router.put(
 
 // Delete a plan (Owner only)
 router.delete(
-    '/plans/:planId',
+    '/:planId',
     isAuthenticated,
     isOwner,
     deletePlan

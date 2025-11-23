@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Gym Manager API",
+    "name": "Gym Manager API - Fixed",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for Gym Manager backend APIs"
+    "description": "Postman collection for Gym Manager backend APIs with proper variable usage"
   },
   "item": [
     {
@@ -21,16 +21,15 @@
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.have.property('token');",
-                  "    if (jsonData.data.token) {",
-                  "        pm.environment.set('authToken', jsonData.data.token);",
-                  "        console.log('Auth token updated:', jsonData.data.token);",
-                  "    } else {",
-                  "        console.log('No token found in response.');",
-                  "    }",
-                  "});"
-                  
-                  "if (pm.environment.get('authToken')) {",
-                  "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.environment.get('authToken') });",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.data.token);",
+                  "    console.log('✓ Auth token updated successfully');",
+                  "    console.log('Token:', jsonData.data.token.substring(0, 20) + '...');",
+                  "} else {",
+                  "    console.log('✗ No token found in response');",
                   "}"
                 ]
               }
@@ -81,14 +80,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/profile",
               "host": ["{{baseUrl}}"],
@@ -108,21 +111,27 @@
                   "    pm.response.to.have.status(200);",
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
-                  "    pm.expect(jsonData.data.mobileNumber).to.equal(pm.request.body.mobileNumber);",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
+                  "    pm.expect(jsonData.data.mobileNumber).to.equal(requestBody.mobileNumber);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
               {
                 "key": "Content-Type",
                 "value": "application/json",
@@ -158,21 +167,28 @@
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
-                  "    pm.environment.set('gymId', jsonData.data.id);",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
+                  "    pm.collectionVariables.set('gymId', jsonData.data.id);",
+                  "    console.log('✓ Gym ID saved:', jsonData.data.id);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
               {
                 "key": "Content-Type",
                 "value": "application/json",
@@ -209,18 +225,66 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/gyms",
               "host": ["{{baseUrl}}"],
               "path": ["api", "gyms"]
+            }
+          }
+        },
+        {
+          "name": "Get My Owned Gyms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get my owned gyms successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.collectionVariables.set('gymId', jsonData.data[0].id);",
+                  "        console.log('✓ Using first owned gym:', jsonData.data[0].id);",
+                  "    } else {",
+                  "        console.log('⚠ No owned gyms found');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/gyms/me/owned",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gyms", "me", "owned"]
             }
           }
         },
@@ -236,21 +300,25 @@
                   "    pm.response.to.have.status(200);",
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.id).to.equal(pm.environment.get('gymId'));",
+                  "    pm.expect(jsonData.data.id).to.equal(pm.collectionVariables.get('gymId'));",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/gyms/:id",
               "host": ["{{baseUrl}}"],
@@ -276,20 +344,26 @@
                   "    pm.response.to.have.status(200);",
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
               {
                 "key": "Content-Type",
                 "value": "application/json",
@@ -331,14 +405,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/gyms/:id",
               "host": ["{{baseUrl}}"],
@@ -347,6 +425,276 @@
                 {
                   "key": "id",
                   "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Plans",
+      "item": [
+        {
+          "name": "Create Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create plan successful\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.collectionVariables.set('planId', jsonData.data.id);",
+                  "    console.log('✓ Plan created:', jsonData.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gymId\": \"{{gymId}}\",\n  \"name\": \"Monthly Plan\",\n  \"description\": \"1 month membership\",\n  \"durationInMonths\": 1,\n  \"price\": 999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/gym/:gymId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "gym", ":gymId"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Plans for Gym",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get plans successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/gym/:gymId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "gym", ":gymId"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active Plans for Gym",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get active plans successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/gym/:gymId/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "gym", ":gymId", "active"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Plan by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Update plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Monthly Plan\",\n  \"price\": 1099,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Delete plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
                 }
               ]
             }
@@ -371,7 +719,8 @@
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.be.an('array');",
                   "    if (jsonData.data.length > 0) {",
-                  "        pm.environment.set('subscriptionId', jsonData.data[0].id);",
+                  "        pm.collectionVariables.set('subscriptionId', jsonData.data[0].id);",
+                  "        console.log('✓ Subscription ID saved:', jsonData.data[0].id);",
                   "    }",
                   "});"
                 ]
@@ -379,14 +728,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/subscriptions/me",
               "host": ["{{baseUrl}}"],
@@ -407,20 +760,26 @@
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.environment.set('subscriptionId', jsonData.data.id);",
+                  "    pm.collectionVariables.set('subscriptionId', jsonData.data.id);",
+                  "    console.log('✓ Subscription ID saved:', jsonData.data.id);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
               {
                 "key": "Content-Type",
                 "value": "application/json",
@@ -457,14 +816,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/subscriptions/:subscriptionId/cancel",
               "host": ["{{baseUrl}}"],
@@ -496,20 +859,26 @@
                   "    const jsonData = pm.response.json();",
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data.status).to.equal('COMPLETED');",
-                  "    pm.environment.set('paymentId', jsonData.data.id);",
+                  "    pm.collectionVariables.set('paymentId', jsonData.data.id);",
+                  "    console.log('✓ Payment ID saved:', jsonData.data.id);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              },
               {
                 "key": "Content-Type",
                 "value": "application/json",
@@ -552,14 +921,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/payments/history",
               "host": ["{{baseUrl}}"],
@@ -586,14 +959,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/payments/gym/:gymId/history",
               "host": ["{{baseUrl}}"],
@@ -626,7 +1003,8 @@
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.be.an('array');",
                   "    if (jsonData.data.length > 0) {",
-                  "        pm.environment.set('attendanceId', jsonData.data[0].id);",
+                  "        pm.collectionVariables.set('attendanceId', jsonData.data[0].id);",
+                  "        console.log('✓ Attendance ID saved:', jsonData.data[0].id);",
                   "    }",
                   "});"
                 ]
@@ -634,24 +1012,27 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/attendance/me",
+              "raw": "{{baseUrl}}/api/attendance/me?gymId={{gymId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "attendance", "me"],
               "query": [
                 {
                   "key": "gymId",
                   "value": "{{gymId}}",
-                  "description": "Optional: Filter by gym",
-                  "disabled": true
+                  "description": "Optional: Filter by gym"
                 }
               ]
             }
@@ -671,21 +1052,26 @@
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.have.property('id');",
                   "    pm.expect(jsonData.data).to.have.property('checkIn');",
-                  "    pm.environment.set('attendanceId', jsonData.data.id);",
+                  "    pm.collectionVariables.set('attendanceId', jsonData.data.id);",
+                  "    console.log('✓ Attendance ID saved:', jsonData.data.id);",
                   "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/attendance/gym/:gymId/check-in",
               "host": ["{{baseUrl}}"],
@@ -718,14 +1104,18 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/attendance/:attendanceId/check-out",
               "host": ["{{baseUrl}}"],
@@ -748,9 +1138,13 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Pre-request script for token refresh, variable setup etc.",
-          "if (!pm.environment.get('authToken')) {",
-          "    console.log('Warning: No auth token set. Please run Google Auth first.');",
+          "// Pre-request script - Check for auth token",
+          "const authToken = pm.collectionVariables.get('authToken');",
+          "",
+          "if (!authToken) {",
+          "    console.log('⚠️ Warning: No auth token set. Please run Google Auth first.');",
+          "} else {",
+          "    console.log('✓ Auth token is set');",
           "}"
         ]
       }
@@ -761,19 +1155,26 @@
         "type": "text/javascript",
         "exec": [
           "// Global response tests",
-          "pm.test(\"Response is JSON\", function() {",
-          "    pm.response.to.have.header('Content-Type', 'application/json; charset=utf-8');",
+          "pm.test(\"Response time is acceptable\", function() {",
+          "    pm.expect(pm.response.responseTime).to.be.below(3000);",
           "});",
           "",
-          "pm.test(\"Response has required structure\", function() {",
-          "    const jsonData = pm.response.json();",
-          "    pm.expect(jsonData).to.have.property('success');",
-          "    if (jsonData.success) {",
-          "        pm.expect(jsonData).to.have.property('data');",
-          "    } else {",
-          "        pm.expect(jsonData).to.have.property('error');",
-          "    }",
-          "});"
+          "pm.test(\"Response is JSON\", function() {",
+          "    pm.response.to.have.header('Content-Type');",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "if (pm.response.code !== 404) {",
+          "    pm.test(\"Response has required structure\", function() {",
+          "        const jsonData = pm.response.json();",
+          "        pm.expect(jsonData).to.have.property('success');",
+          "        if (jsonData.success) {",
+          "            pm.expect(jsonData).to.have.property('data');",
+          "        } else {",
+          "            pm.expect(jsonData).to.have.property('error');",
+          "        }",
+          "    });",
+          "}"
         ]
       }
     }

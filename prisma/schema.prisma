@@ -11,10 +11,11 @@ model User {
   id            String    @id @default(cuid())
   name          String
   mobileNumber  String?   @unique
-  roles         Role[]    @default([USER]) 
+  roles         Role[]    @default([USER])
   gymsOwned     Gym[]          @relation("GymOwner")
   subscriptions Subscription[]
   attendanceLogs Attendance[]
+  deletedAt     DateTime?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

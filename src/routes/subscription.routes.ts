@@ -4,15 +4,14 @@ import {
   subscribe,
   cancelSubscription,
 } from '../controllers/subscription.controller';
-import { isAuthenticated } from '../middleware/isAuthenticated';
-import { validate } from '../middleware/validate';
+import { isAuthenticated, validate } from '../middleware';
 import { subscriptionCreateSchema } from '../types/schemas';
 
 const router = Router();
 
 // User subscription routes
 router.get('/me', isAuthenticated, getMySubscriptions);
-router.post('/subscribe', isAuthenticated, validate(subscriptionCreateSchema), subscribe);
+router.post('/subscribe', isAuthenticated, validate({ body: subscriptionCreateSchema }), subscribe);
 router.post('/:subscriptionId/cancel', isAuthenticated, cancelSubscription);
 
 export default router;

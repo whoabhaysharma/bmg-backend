@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { AuthenticatedRequest } from '../middleware';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 

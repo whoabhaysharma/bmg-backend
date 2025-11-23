@@ -7,9 +7,7 @@ import {
     deletePlan,
     getActivePlansByGym,
 } from '../controllers';
-import { isAuthenticated } from '../middleware/isAuthenticated';
-import { isOwner } from '../middleware/isOwner';
-import { validate } from '../middleware/validate';
+import { isAuthenticated, isOwner, validate } from '../middleware';
 
 const router = Router();
 

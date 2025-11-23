@@ -5,15 +5,13 @@ import {
   getGymPayments,
   handleWebhook,
 } from '../controllers/payment.controller';
-import { isAuthenticated } from '../middleware/isAuthenticated';
-import { isOwner } from '../middleware/isOwner';
-import { validate } from '../middleware/validate';
+import { isAuthenticated, isOwner, validate } from '../middleware';
 import { paymentProcessSchema } from '../types/schemas';
 
 const router = Router();
 
 // Payment processing
-router.post('/:subscriptionId/process', isAuthenticated, validate(paymentProcessSchema), processPayment);
+router.post('/:subscriptionId/process', isAuthenticated, validate({ body: paymentProcessSchema }), processPayment);
 
 // Payment history routes
 router.get('/history', isAuthenticated, getMyPayments);

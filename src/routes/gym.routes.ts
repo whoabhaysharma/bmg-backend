@@ -7,8 +7,7 @@ import {
   updateGym,
   deleteGym,
 } from '../controllers/gym.controller';
-import { isAuthenticated } from '../middleware/isAuthenticated';
-import { isOwner } from '../middleware/isOwner';
+import { isAuthenticated, isOwner } from '../middleware';
 
 const router = Router();
 

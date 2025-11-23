@@ -4,7 +4,7 @@ import {
   checkIn,
   checkOut,
 } from '../controllers/attendance.controller';
-import { isAuthenticated } from '../middleware/isAuthenticated';
+import { isAuthenticated } from '../middleware';
 
 const router = Router();
 

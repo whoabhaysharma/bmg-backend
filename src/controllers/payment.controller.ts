@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { AuthenticatedRequest } from '../middleware';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 
@@ -46,10 +46,10 @@ export const processPayment = async (
     }
 
     if (subscription.payment?.status === 'COMPLETED') {
-      logger.warn('Payment already completed', { 
-        userId, 
+      logger.warn('Payment already completed', {
+        userId,
         subscriptionId,
-        paymentId: subscription.payment.id 
+        paymentId: subscription.payment.id
       });
       return res.status(400).json({
         success: false,
@@ -70,10 +70,10 @@ export const processPayment = async (
       },
     });
 
-    logger.info('Successfully processed payment', { 
-      userId, 
+    logger.info('Successfully processed payment', {
+      userId,
       subscriptionId,
-      paymentId: payment.id 
+      paymentId: payment.id
     });
 
     return res.status(200).json({
@@ -128,9 +128,9 @@ export const getMyPayments = async (
       },
     });
 
-    logger.info('Successfully fetched payment history', { 
-      userId: req.user.id, 
-      count: payments.length 
+    logger.info('Successfully fetched payment history', {
+      userId: req.user.id,
+      count: payments.length
     });
 
     return res.status(200).json({
@@ -193,7 +193,6 @@ export const getGymPayments = async (
               select: {
                 id: true,
                 name: true,
-                email: true,
               },
             },
             plan: true,
@@ -205,10 +204,10 @@ export const getGymPayments = async (
       },
     });
 
-    logger.info('Successfully fetched gym payment history', { 
-      userId: req.user.id, 
+    logger.info('Successfully fetched gym payment history', {
+      userId: req.user.id,
       gymId,
-      count: payments.length 
+      count: payments.length
     });
 
     return res.status(200).json({

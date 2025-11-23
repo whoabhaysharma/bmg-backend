@@ -1,5 +1,5 @@
 import { Response, Request, RequestHandler } from 'express';
-import { AuthenticatedRequest } from '../middleware/isAuthenticated';
+import { AuthenticatedRequest } from '../middleware';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
 
@@ -14,7 +14,7 @@ export const createGym: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const { name, address } = req.body;
-    
+
     if (!authReq.user?.id) {
       logger.error('User ID not found in request');
       return res.status(401).json({
@@ -23,7 +23,7 @@ export const createGym: RequestHandler = async (req, res) => {
         error: 'User not authenticated',
       });
     }
-    
+
     const ownerId = authReq.user.id;
 
     // Only OWNER role can create gym (enforced by isOwner middleware in routes)
@@ -87,7 +87,7 @@ export const getAllGyms: RequestHandler = async (req, res) => {
 export const getMyGyms: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
-    
+
     if (!authReq.user?.id) {
       logger.error('User ID not found in request');
       return res.status(401).json({
@@ -120,7 +120,7 @@ export const getMyGyms: RequestHandler = async (req, res) => {
             isActive: true,
           },
         },
-        subscribers: {
+        subscriptions: {
           select: {
             id: true,
             userId: true,
@@ -197,7 +197,7 @@ export const getGymById = async (req: AuthenticatedRequest, res: Response) => {
 export const updateGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
-  
+
   if (!user?.id) {
     return res.status(401).json({
       success: false,
@@ -258,7 +258,7 @@ export const updateGym: RequestHandler = async (req, res) => {
 export const deleteGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
-  
+
   if (!user?.id) {
     return res.status(401).json({
       success: false,

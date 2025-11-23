@@ -40,39 +40,51 @@ model Gym {
 }
 
 model GymSubscriptionPlan {
-  id               String    @id @default(cuid())
-  gymId            String
-  gym              Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  gymId         String
+  gym           Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
   
-  name             String
-  description      String?
-  durationInMonths Int
-  price            Int
-  isActive         Boolean   @default(true)
-  
-  subscriptions    Subscription[]
+  name          String
+  description   String?
 
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  // --- NEW: Flexible Plan Duration Fields ---
+  durationValue Int      // e.g., 1 for "1 Day" or 3 for "3 Months"
+  durationUnit  PlanType @default(MONTH) // Uses the PlanType enum (DAY, WEEK, MONTH, YEAR)
+  // ------------------------------------------
+
+  price         Int
+  isActive      Boolean  @default(true)
+  
+  subscriptions Subscription[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gymId     String
-  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  planId    String
-  plan      GymSubscriptionPlan @relation(fields: [planId], references: [id])
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymId        String
+  gym          Gym                @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  planId       String
+  plan         GymSubscriptionPlan @relation(fields: [planId], references: [id])
   
-  startDate DateTime @default(now())
-  endDate   DateTime
-  status    SubscriptionStatus @default(ACTIVE)
+  startDate    DateTime           @default(now())
+  endDate      DateTime
+  status       SubscriptionStatus @default(ACTIVE)
   
-  payment   Payment?
+  accessCode   String             @unique 
+  lastCheckIn  DateTime?          
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  payment      Payment?
+  
+  // --- ADD THIS LINE ---
+  attendanceLogs Attendance[] 
+  // --------------------
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 }
 
 model Payment {
@@ -89,20 +101,30 @@ model Payment {
 }
 
 model Attendance {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gymId     String
-  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  date      DateTime @default(now()) 
+  id             String        @id @default(cuid())
   
-  checkIn   DateTime?
-  checkOut  DateTime?
+  // 1. Link to User (Fast history lookups)
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 2. Link to Subscription (Know exactly which plan was used)
+  subscriptionId String
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  // 3. Link to Gym (Data isolation)
+  gymId          String
+  gym            Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  
+  checkIn        DateTime      @default(now())
+  checkOut       DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  @@index([userId, gymId]) 
+  // Index for speed: "Find all attendance for this user at this gym"
+  @@index([userId, gymId])
+  // Index for speed: "Find all usage for this specific subscription"
+  @@index([subscriptionId])
 }
 
 enum Role {
@@ -121,4 +143,11 @@ enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+enum PlanType {
+  DAY
+  WEEK
+  MONTH
+  YEAR
 }

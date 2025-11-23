@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Role, UserRole, Payment } from '@prisma/client';
+import { User, Role, Payment } from '@prisma/client';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -10,7 +10,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export interface UserWithRoles extends User {
-  userRoles: UserRole[];
+  roles: Role[];
 }
 
 export interface ApiResponse<T = unknown> {

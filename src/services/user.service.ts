@@ -6,7 +6,6 @@ export const UserService = {
   async getAllUsers() {
     return prisma.user.findMany({
       include: {
-        userRoles: true,
         gymsOwned: true,
         subscriptions: true,
       },
@@ -17,20 +16,19 @@ export const UserService = {
     return prisma.user.findUnique({
       where: { id },
       include: {
-        userRoles: true,
         gymsOwned: true,
         subscriptions: true,
       },
     });
   },
 
-  async createUser(data: { name: string; email: string; password?: string; mobileNumber?: string; googleId?: string }) {
+  async createUser(data: { name: string; mobileNumber?: string }) {
     return prisma.user.create({
       data,
     });
   },
 
-  async updateUser(id: string, data: Partial<{ name: string; email: string; password: string; mobileNumber: string }>) {
+  async updateUser(id: string, data: Partial<{ name: string; mobileNumber: string }>) {
     return prisma.user.update({
       where: { id },
       data,

@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
+import { Role } from '@prisma/client';
 
 // Get my profile
 
@@ -25,14 +26,8 @@ export const getMyProfile: RequestHandler = async (req, res) => {
       select: {
         id: true,
         name: true,
-        email: true,
         mobileNumber: true,
-        googleId: true,
-        userRoles: {
-          select: {
-            role: true,
-          },
-        },
+        roles: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -47,13 +42,10 @@ export const getMyProfile: RequestHandler = async (req, res) => {
       });
     }
 
-    const roles = dbUser.userRoles.map((userRole: { role: string }) => userRole.role);
-    const userProfile = { ...dbUser, userRoles: roles };
-
-    logger.info({ msg: 'Successfully fetched user profile', userId: user.id, rolesCount: roles.length });
+    logger.info({ msg: 'Successfully fetched user profile', userId: user.id, rolesCount: dbUser.roles.length });
     return res.status(200).json({
       success: true,
-      data: userProfile,
+      data: dbUser,
       error: null,
     });
   } catch (error) {
@@ -96,8 +88,8 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
         });
       }
 
-      const validRoles = ['OWNER', 'USER'];
-      const invalidRoles = roles.filter((role: string) => !validRoles.includes(role));
+      const validRoles = Object.values(Role);
+      const invalidRoles = roles.filter((role: string) => !validRoles.includes(role as Role));
 
       if (invalidRoles.length > 0) {
         logger.warn({
@@ -111,22 +103,6 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
           error: `Invalid roles: ${invalidRoles.join(', ')}. Valid roles are: ${validRoles.join(', ')}`,
         });
       }
-
-      // Remove all existing roles and create new ones
-      await prisma.userRole.deleteMany({
-        where: {
-          userId: user.id,
-        },
-      });
-
-      // Ensure roles are cast to the correct enum type if needed
-      await prisma.userRole.createMany({
-        data: roles.map((role: string) => ({
-          userId: user.id,
-          role: role as any, // Cast to 'any' to bypass type error, or use 'as Role' if Role enum is imported
-        })),
-      });
-      logger.info({ msg: 'Replaced user roles', userId: user.id, newRoles: roles });
     }
 
     const updatedUser = await prisma.user.update({
@@ -136,30 +112,22 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
       data: {
         name,
         mobileNumber,
+        roles: roles ? { set: roles as Role[] } : undefined,
       },
       select: {
         id: true,
         name: true,
-        email: true,
         mobileNumber: true,
-        googleId: true,
-        userRoles: {
-          select: {
-            role: true,
-          },
-        },
+        roles: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
-    const rolesList = updatedUser.userRoles.map((userRole: { role: string }) => userRole.role);
-    const userProfile = { ...updatedUser, userRoles: rolesList };
-
-    logger.info({ msg: 'Successfully updated user profile', userId: user.id, rolesCount: rolesList.length });
+    logger.info({ msg: 'Successfully updated user profile', userId: user.id, rolesCount: updatedUser.roles.length });
     return res.status(200).json({
       success: true,
-      data: userProfile,
+      data: updatedUser,
       error: null,
     });
   } catch (error) {

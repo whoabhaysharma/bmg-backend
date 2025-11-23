@@ -61,6 +61,7 @@ export type PlanUpdateInput = z.infer<typeof planUpdateSchema>;
 // ============================================================================
 // SUBSCRIPTION SCHEMAS
 // ============================================================================
+
 export const subscriptionCreateSchema = z.object({
   planId: z.string().min(1, 'Plan ID is required'),
   gymId: z.string().min(1, 'Gym ID is required'),

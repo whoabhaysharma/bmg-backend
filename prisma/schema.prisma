@@ -28,7 +28,9 @@ model Gym {
   
   ownerId          String
   owner            User      @relation("GymOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  
+
+  verified         Boolean   @default(false)
+
   subscriptionPlans GymSubscriptionPlan[]
   subscriptions     Subscription[]
   attendanceLogs    Attendance[]

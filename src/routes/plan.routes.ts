@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Role } from '@prisma/client';
 import {
     createPlan,
     getPlansByGym,
@@ -7,42 +8,43 @@ import {
     deletePlan,
     getActivePlansByGym,
 } from '../controllers';
-import { isAuthenticated, isOwner, validate } from '../middleware';
+import { isAuthenticated, authorize, validate } from '../middleware';
+import { planCreateSchema, planUpdateSchema } from '../types/schemas';
 
 const router = Router();
 
-// Create a new plan for a gym (Owner only)
+// Create a new plan (Owner or Admin only)
 router.post(
-    '/gym/:gymId',
+    '/',
     isAuthenticated,
-    isOwner,
-    validate,
+    authorize([Role.OWNER, Role.ADMIN]),
+    validate({ body: planCreateSchema }),
     createPlan
 );
 
-// Get all plans for a gym
-router.get('/gym/:gymId', getPlansByGym);
+// Get all plans for a gym (by query parameter)
+router.get('/', isAuthenticated, getPlansByGym);
 
-// Get active plans for a gym
-router.get('/gym/:gymId/active', getActivePlansByGym);
+// Get active plans for a gym (by query parameter)
+router.get('/active', isAuthenticated, getActivePlansByGym);
 
 // Get a single plan by ID
-router.get('/:planId', getPlanById);
+router.get('/:planId', isAuthenticated, getPlanById);
 
-// Update a plan (Owner only)
+// Update a plan (Owner or Admin only)
 router.put(
     '/:planId',
     isAuthenticated,
-    isOwner,
-    validate,
+    authorize([Role.OWNER, Role.ADMIN]),
+    validate({ body: planUpdateSchema }),
     updatePlan
 );
 
-// Delete a plan (Owner only)
+// Delete a plan (Owner or Admin only)
 router.delete(
     '/:planId',
     isAuthenticated,
-    isOwner,
+    authorize([Role.OWNER, Role.ADMIN]),
     deletePlan
 );
 

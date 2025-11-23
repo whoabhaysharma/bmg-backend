@@ -22,13 +22,30 @@ export const SubscriptionPlanService = {
     });
   },
 
-  async createPlan(data: { gymId: string; name: string; description?: string; durationInMonths: number; price: number }) {
-    return prisma.gymSubscriptionPlan.create({
-      data,
+  async getPlansByGym(gymId: string) {
+    return prisma.gymSubscriptionPlan.findMany({
+      where: { gymId },
+      orderBy: { createdAt: 'desc' },
     });
   },
 
-  async updatePlan(id: string, data: Partial<{ name: string; description: string; durationInMonths: number; price: number }>) {
+  async getActivePlansByGym(gymId: string) {
+    return prisma.gymSubscriptionPlan.findMany({
+      where: { gymId, isActive: true },
+      orderBy: { durationInMonths: 'asc' },
+    });
+  },
+
+  async createPlan(data: { gymId: string; name: string; description?: string; durationInMonths: number; price: number }) {
+    return prisma.gymSubscriptionPlan.create({
+      data: {
+        ...data,
+        description: data.description || null,
+      },
+    });
+  },
+
+  async updatePlan(id: string, data: Partial<{ name: string; description: string; durationInMonths: number; price: number; isActive: boolean }>) {
     return prisma.gymSubscriptionPlan.update({
       where: { id },
       data,

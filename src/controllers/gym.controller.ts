@@ -161,3 +161,47 @@ export const deleteGym: RequestHandler = async (req, res) => {
     return sendInternalError(res);
   }
 };
+
+// Verify a gym (ADMIN only)
+export const verifyGym: RequestHandler = async (req, res) => {
+  const { id } = req.params;
+  const user = getAuthUser(req);
+
+  if (!user?.roles?.includes('ADMIN')) {
+    return sendForbidden(res, 'Only admin can verify gyms');
+  }
+
+  try {
+    const gym = await GymService.getGymById(id);
+    if (!gym) {
+      return sendNotFound(res, 'Gym not found');
+    }
+    const updatedGym = await GymService.setGymVerified(id, true);
+    return sendSuccess(res, updatedGym);
+  } catch (error) {
+    logger.error(`Error verifying gym with id: ${id}: ${error}`);
+    return sendInternalError(res);
+  }
+};
+
+// Unverify a gym (ADMIN only)
+export const unverifyGym: RequestHandler = async (req, res) => {
+  const { id } = req.params;
+  const user = getAuthUser(req);
+
+  if (!user?.roles?.includes('ADMIN')) {
+    return sendForbidden(res, 'Only admin can unverify gyms');
+  }
+
+  try {
+    const gym = await GymService.getGymById(id);
+    if (!gym) {
+      return sendNotFound(res, 'Gym not found');
+    }
+    const updatedGym = await GymService.setGymVerified(id, false);
+    return sendSuccess(res, updatedGym);
+  } catch (error) {
+    logger.error(`Error unverifying gym with id: ${id}: ${error}`);
+    return sendInternalError(res);
+  }
+};

@@ -3,31 +3,30 @@ import { userService } from '../services/user.service';
 import { Role } from '@prisma/client';
 
 import { AuthenticatedRequest } from '../middleware';
+import { getAuthUser } from '../utils/getAuthUser';
+import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError, sendBadRequest } from '../utils/response';
 
 export const getMyProfile = async (req: Request, res: Response) => {
-  const authReq = req as AuthenticatedRequest;
-  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
-
+  const user = getAuthUser(req);
+  if (!user) return sendUnauthorized(res);
   try {
-    const profile = await userService.getUserProfileWithRelations(authReq.user.id);
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
-    res.json(profile);
+    const profile = await userService.getUserProfileWithRelations(user.id);
+    if (!profile) return sendNotFound(res, 'Profile not found');
+    return sendSuccess(res, profile);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch profile' });
+    return sendInternalError(res, 'Failed to fetch profile');
   }
 };
 
 export const updateMyProfile = async (req: Request, res: Response) => {
-  const authReq = req as AuthenticatedRequest;
-  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
-
+  const user = getAuthUser(req);
+  if (!user) return sendUnauthorized(res);
   try {
     const updateData = { name: req.body.name }; // Only allow updating the name
-
-    const updatedUser = await userService.updateUser(authReq.user.id, updateData);
-    res.json(updatedUser);
+    const updatedUser = await userService.updateUser(user.id, updateData);
+    return sendSuccess(res, updatedUser);
   } catch (error) {
-    res.status(400).json({ error: 'Failed to update profile' });
+    return sendBadRequest(res, 'Failed to update profile');
   }
 };
 
@@ -42,9 +41,9 @@ export class UserController {
       // Note: If this is public registration, you might want to force 
       // role to USER inside the service or here to prevent role escalation.
       const user = await userService.createUser(req.body);
-      res.status(201).json(user);
+      return sendSuccess(res, user, 201);
     } catch (error) {
-      res.status(400).json({ error: 'Failed to create user', details: error });
+      return sendBadRequest(res, 'Failed to create user');
     }
   }
 
@@ -54,10 +53,9 @@ export class UserController {
    */
   async getAllUsers(req: AuthenticatedRequest, res: Response) {
     try {
-      const currentUser = req.user;
-
+      const currentUser = getAuthUser(req);
       if (!currentUser || !currentUser.roles.includes(Role.ADMIN)) {
-        return res.status(403).json({ error: 'Forbidden: Admins only' });
+        return sendForbidden(res, 'Forbidden: Admins only');
       }
 
       const page = Number(req.query.page) || 1;
@@ -65,9 +63,9 @@ export class UserController {
       const includeDeleted = req.query.includeDeleted === 'true';
 
       const result = await userService.getAllUsers(page, limit, includeDeleted);
-      res.json(result);
+      return sendSuccess(res, result);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch users' });
+      return sendInternalError(res, 'Failed to fetch users');
     }
   }
 
@@ -78,23 +76,22 @@ export class UserController {
   async getUserById(req: AuthenticatedRequest, res: Response) {
     try {
       const { id } = req.params;
-      const currentUser = req.user;
-
-      if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+      const currentUser = getAuthUser(req);
+      if (!currentUser) return sendUnauthorized(res);
 
       const isSelf = currentUser.id === id;
       const isAdmin = currentUser.roles.includes(Role.ADMIN);
 
       if (!isSelf && !isAdmin) {
-        return res.status(403).json({ error: 'Forbidden: You can only view your own data' });
+        return sendForbidden(res, 'Forbidden: You can only view your own data');
       }
 
       const user = await userService.getUserById(id);
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user) return sendNotFound(res, 'User not found');
 
-      res.json(user);
+      return sendSuccess(res, user);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch user' });
+      return sendInternalError(res, 'Failed to fetch user');
     }
   }
 
@@ -105,15 +102,14 @@ export class UserController {
   async updateUser(req: AuthenticatedRequest, res: Response) {
     try {
       const { id } = req.params;
-      const currentUser = req.user;
-
-      if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+      const currentUser = getAuthUser(req);
+      if (!currentUser) return sendUnauthorized(res);
 
       const isSelf = currentUser.id === id;
       const isAdmin = currentUser.roles.includes(Role.ADMIN);
 
       if (!isSelf && !isAdmin) {
-        return res.status(403).json({ error: 'Forbidden' });
+        return sendForbidden(res);
       }
 
       // Security: Prevent non-admins from updating sensitive fields
@@ -126,9 +122,9 @@ export class UserController {
       }
 
       const updatedUser = await userService.updateUser(id, updateData);
-      res.json(updatedUser);
+      return sendSuccess(res, updatedUser);
     } catch (error) {
-      res.status(400).json({ error: 'Failed to update user' });
+      return sendBadRequest(res, 'Failed to update user');
     }
   }
 
@@ -139,21 +135,20 @@ export class UserController {
   async deleteUser(req: AuthenticatedRequest, res: Response) {
     try {
       const { id } = req.params;
-      const currentUser = req.user;
-
-      if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+      const currentUser = getAuthUser(req);
+      if (!currentUser) return sendUnauthorized(res);
 
       const isSelf = currentUser.id === id;
       const isAdmin = currentUser.roles.includes(Role.ADMIN);
 
       if (!isSelf && !isAdmin) {
-        return res.status(403).json({ error: 'Forbidden' });
+        return sendForbidden(res);
       }
 
       await userService.deleteUser(id);
-      res.json({ message: 'User deleted successfully' });
+      return sendSuccess(res, { message: 'User deleted successfully' });
     } catch (error) {
-      res.status(400).json({ error: 'Failed to delete user' });
+      return sendBadRequest(res, 'Failed to delete user');
     }
   }
 
@@ -163,17 +158,16 @@ export class UserController {
    */
   async restoreUser(req: AuthenticatedRequest, res: Response) {
     try {
-      const currentUser = req.user;
-
+      const currentUser = getAuthUser(req);
       if (!currentUser || !currentUser.roles.includes(Role.ADMIN)) {
-        return res.status(403).json({ error: 'Forbidden: Admins only' });
+        return sendForbidden(res, 'Forbidden: Admins only');
       }
 
       const { id } = req.params;
       const user = await userService.restoreUser(id);
-      res.json(user);
+      return sendSuccess(res, user);
     } catch (error) {
-      res.status(400).json({ error: 'Failed to restore user' });
+      return sendBadRequest(res, 'Failed to restore user');
     }
   }
 
@@ -184,22 +178,21 @@ export class UserController {
    */
   async addRole(req: AuthenticatedRequest, res: Response) {
     try {
-      const currentUser = req.user;
-
+      const currentUser = getAuthUser(req);
       if (!currentUser || !currentUser.roles.includes(Role.ADMIN)) {
-        return res.status(403).json({ error: 'Forbidden: Admins only' });
+        return sendForbidden(res, 'Forbidden: Admins only');
       }
 
       const { id } = req.params; // User ID
       const { role, action } = req.body; // Role and action (add or remove)
 
       if (!role || !['add', 'remove'].includes(action)) {
-        return res.status(400).json({ error: 'Invalid role or action' });
+        return sendBadRequest(res, 'Invalid role or action');
       }
 
       const user = await userService.getUserById(id);
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        return sendNotFound(res, 'User not found');
       }
 
       let updatedUser;
@@ -209,9 +202,9 @@ export class UserController {
         updatedUser = await userService.removeRole(id, role);
       }
 
-      res.json(updatedUser);
+      return sendSuccess(res, updatedUser);
     } catch (error: any) {
-      res.status(500).json({ error: 'Failed to update role', details: error.message });
+      return sendInternalError(res, 'Failed to update role');
     }
   }
 
@@ -222,26 +215,25 @@ export class UserController {
   async getProfile(req: AuthenticatedRequest, res: Response) {
     try {
       // Allows route like /users/me/profile or /users/:id/profile
-      const id = req.params.id === 'me' ? req.user?.id : req.params.id;
+      const currentUser = getAuthUser(req);
+      const id = req.params.id === 'me' ? currentUser?.id : req.params.id;
 
-      if (!id) return res.status(400).json({ error: 'User ID required' });
-
-      const currentUser = req.user;
-      if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
+      if (!id) return sendBadRequest(res, 'User ID required');
+      if (!currentUser) return sendUnauthorized(res);
 
       const isSelf = currentUser.id === id;
       const isAdmin = currentUser.roles.includes(Role.ADMIN);
 
       if (!isSelf && !isAdmin) {
-        return res.status(403).json({ error: 'Forbidden' });
+        return sendForbidden(res);
       }
 
       const profile = await userService.getUserProfileWithRelations(id);
-      if (!profile) return res.status(404).json({ error: 'Profile not found' });
+      if (!profile) return sendNotFound(res, 'Profile not found');
 
-      res.json(profile);
+      return sendSuccess(res, profile);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      return sendInternalError(res, 'Failed to fetch profile');
     }
   }
 }

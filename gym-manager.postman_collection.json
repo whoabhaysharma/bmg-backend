@@ -201,277 +201,81 @@
       "item": [
         {
           "name": "Create Gym",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Create gym successful\", function() {",
-                  "    pm.response.to.have.status(201);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    const requestBody = JSON.parse(pm.request.body.raw);",
-                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
-                  "    pm.collectionVariables.set('gymId', jsonData.data.id);",
-                  "    console.log('✓ Gym ID saved:', jsonData.data.id);",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"My Gym\",\n  \"address\": \"123 Main St\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/gyms",
+              "raw": "{{baseUrl}}/gym",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms"]
-            }
-          }
-        },
-        {
-          "name": "Get All Gyms",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get gyms successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/gyms",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms"]
-            }
-          }
-        },
-        {
-          "name": "Get My Owned Gyms",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get my owned gyms successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "    if (jsonData.data.length > 0) {",
-                  "        pm.collectionVariables.set('gymId', jsonData.data[0].id);",
-                  "        console.log('✓ Using first owned gym:', jsonData.data[0].id);",
-                  "    } else {",
-                  "        console.log('⚠ No owned gyms found');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/gyms/me/owned",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms", "me", "owned"]
-            }
-          }
-        },
-        {
-          "name": "Get Gym By ID",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get gym successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.id).to.equal(pm.collectionVariables.get('gymId'));",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{gymId}}"
-                }
-              ]
+              "path": ["gym"]
             }
           }
         },
         {
           "name": "Update Gym",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Update gym successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    const requestBody = JSON.parse(pm.request.body.raw);",
-                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Updated Gym\",\n  \"address\": \"456 New St\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
+              "raw": "{{baseUrl}}/gym/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{gymId}}"
-                }
-              ]
+              "path": ["gym", ":id"]
             }
           }
         },
         {
           "name": "Delete Gym",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Delete gym successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{authToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
+              "raw": "{{baseUrl}}/gym/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "gyms", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{gymId}}"
-                }
-              ]
+              "path": ["gym", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Get My Owned Gyms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/gym/me/owned",
+              "host": ["{{baseUrl}}"],
+              "path": ["gym", "me", "owned"]
+            }
+          }
+        },
+        {
+          "name": "Get All Gyms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/gym",
+              "host": ["{{baseUrl}}"],
+              "path": ["gym"]
+            }
+          }
+        },
+        {
+          "name": "Get Gym By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/gym/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["gym", ":id"]
             }
           }
         }

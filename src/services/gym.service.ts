@@ -1,12 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 export const GymService = {
   async getAllGyms() {
     return prisma.gym.findMany({
       include: {
-        owner: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         subscriptionPlans: true,
       },
     });
@@ -16,7 +19,12 @@ export const GymService = {
     return prisma.gym.findUnique({
       where: { id },
       include: {
-        owner: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         subscriptionPlans: true,
       },
     });
@@ -25,6 +33,14 @@ export const GymService = {
   async createGym(data: { name: string; address?: string; ownerId: string }) {
     return prisma.gym.create({
       data,
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   },
 
@@ -32,6 +48,14 @@ export const GymService = {
     return prisma.gym.update({
       where: { id },
       data,
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   },
 

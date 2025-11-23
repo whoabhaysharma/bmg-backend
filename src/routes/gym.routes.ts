@@ -7,15 +7,20 @@ import {
   updateGym,
   deleteGym,
 } from '../controllers/gym.controller';
-import { isAuthenticated, isOwner } from '../middleware';
+import { isAuthenticated } from '../middleware';
+import { authorize } from '../middleware/authorize';
+import { Role } from '@prisma/client';
 
 const router = Router();
 
-router.post('/', isAuthenticated, isOwner, createGym);
-router.get('/', isAuthenticated, getAllGyms);
+// Only OWNER or ADMIN can create, update, delete gyms
+router.post('/', isAuthenticated, authorize([Role.OWNER, Role.ADMIN]), createGym);
+router.put('/:id', isAuthenticated, authorize([Role.OWNER, Role.ADMIN]), updateGym);
+router.delete('/:id', isAuthenticated, authorize([Role.OWNER, Role.ADMIN]), deleteGym);
+
+// All authenticated users can view gyms
 router.get('/me/owned', isAuthenticated, getMyGyms);
+router.get('/', isAuthenticated, getAllGyms);
 router.get('/:id', isAuthenticated, getGymById);
-router.put('/:id', isAuthenticated, isOwner, updateGym);
-router.delete('/:id', isAuthenticated, isOwner, deleteGym);
 
 export default router;

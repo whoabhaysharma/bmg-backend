@@ -1,20 +1,20 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
 import * as authService from '../services/auth.service';
+import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
 export const sendOtp = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   logger.info('Processing Send OTP request');
   try {
     const { phoneNumber } = req.body;
 
     if (!phoneNumber) {
-      return res.status(400).json({ message: 'Phone number is required' });
+      return sendBadRequest(res, 'Phone number is required');
     }
 
     const otp = await authService.generateOtp(phoneNumber);
@@ -23,30 +23,29 @@ export const sendOtp = async (
     // For now, we'll log it to the console for testing
     logger.info(`Generated OTP for ${phoneNumber}: ${otp}`);
 
-    res.status(200).json({ message: 'OTP sent successfully' });
+    sendSuccess(res, 'OTP sent successfully');
   } catch (error) {
     logger.error('Error sending OTP', error);
-    next(error);
+    sendError(res, 'Failed to send OTP');
   }
 };
 
 export const verifyOtp = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   logger.info('Processing Verify OTP request');
   try {
     const { phoneNumber, otp } = req.body;
 
     if (!phoneNumber || !otp) {
-      return res.status(400).json({ message: 'Phone number and OTP are required' });
+      return sendBadRequest(res, 'Phone number and OTP are required');
     }
 
     const isValid = await authService.verifyOtp(phoneNumber, otp);
 
     if (!isValid) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
+      return sendBadRequest(res, 'Invalid or expired OTP');
     }
 
     const user = await authService.findOrCreateUser(phoneNumber);
@@ -62,7 +61,8 @@ export const verifyOtp = async (
       { expiresIn: '7d' }
     );
 
-    res.json({
+    sendSuccess(res, {
+      message: 'OTP verified successfully',
       token,
       user: {
         id: user.id,
@@ -71,9 +71,8 @@ export const verifyOtp = async (
         roles: user.roles,
       },
     });
-
   } catch (error) {
     logger.error('Error verifying OTP', error);
-    next(error);
+    sendError(res, 'Failed to verify OTP');
   }
 };

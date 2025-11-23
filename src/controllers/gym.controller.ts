@@ -1,13 +1,9 @@
-import { Response, Request, RequestHandler } from 'express';
+import { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware';
-import prisma from '../lib/prisma';
+import { GymService } from '../services/gym.service';
 import logger from '../lib/logger';
-
-// Helper function to safely access user from request
-const getAuthUser = (req: Request) => {
-  const authReq = req as AuthenticatedRequest;
-  return authReq.user;
-};
+import { getAuthUser } from '../utils/getAuthUser';
+import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError } from '../utils/response';
 
 // Create a new gym
 export const createGym: RequestHandler = async (req, res) => {
@@ -17,37 +13,23 @@ export const createGym: RequestHandler = async (req, res) => {
 
     if (!authReq.user?.id) {
       logger.error('User ID not found in request');
-      return res.status(401).json({
-        success: false,
-        data: null,
-        error: 'User not authenticated',
-      });
+      return sendUnauthorized(res);
     }
 
     const ownerId = authReq.user.id;
 
     // Only OWNER role can create gym (enforced by isOwner middleware in routes)
-    const gym = await prisma.gym.create({
-      data: {
-        name,
-        address,
-        ownerId,
-      },
+    const gym = await GymService.createGym({
+      name,
+      address,
+      ownerId,
     });
 
     logger.info(`Successfully created gym with id: ${gym.id}`);
-    res.status(201).json({
-      success: true,
-      data: gym,
-      error: null,
-    });
+    return sendSuccess(res, gym, 201);
   } catch (error) {
     logger.error(`Error creating gym: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };
 
@@ -56,30 +38,12 @@ export const getAllGyms: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
   logger.info('Fetching all gyms', { userId: user?.id });
   try {
-    const gyms = await prisma.gym.findMany({
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
+    const gyms = await GymService.getAllGyms();
     logger.info('Successfully fetched all gyms');
-    res.status(200).json({
-      success: true,
-      data: gyms,
-      error: null,
-    });
+    return sendSuccess(res, gyms);
   } catch (error) {
     logger.error(`Error fetching all gyms: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };
 
@@ -90,106 +54,41 @@ export const getMyGyms: RequestHandler = async (req, res) => {
 
     if (!authReq.user?.id) {
       logger.error('User ID not found in request');
-      return res.status(401).json({
-        success: false,
-        data: null,
-        error: 'User not authenticated',
-      });
+      return sendUnauthorized(res);
     }
 
     const userId = authReq.user.id;
     logger.info(`Fetching gyms owned by user: ${userId}`);
 
-    const myGyms = await prisma.gym.findMany({
-      where: {
-        ownerId: userId,
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        subscriptionPlans: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            durationInMonths: true,
-            isActive: true,
-          },
-        },
-        subscriptions: {
-          select: {
-            id: true,
-            userId: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // For now, filter all gyms by owner. In future, we can add a dedicated service method
+    const allGyms = await GymService.getAllGyms();
+    const myGyms = allGyms.filter((gym) => gym.ownerId === userId);
 
     logger.info(`Successfully fetched ${myGyms.length} gyms for user: ${userId}`);
-    res.status(200).json({
-      success: true,
-      data: myGyms,
-      error: null,
-    });
+    return sendSuccess(res, myGyms);
   } catch (error) {
     logger.error(`Error fetching user's gyms: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };
 
 // Get a single gym by ID
-export const getGymById = async (req: AuthenticatedRequest, res: Response) => {
+export const getGymById: RequestHandler = async (req, res) => {
   const { id } = req.params;
   logger.info(`Fetching gym with id: ${id}`);
   try {
-    const gym = await prisma.gym.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        subscriptionPlans: true,
-      },
-    });
+    const gym = await GymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
-      return res.status(404).json({
-        success: false,
-        data: null,
-        error: 'Gym not found',
-      });
+      return sendNotFound(res, 'Gym not found');
     }
 
     logger.info(`Successfully fetched gym with id: ${id}`);
-    res.status(200).json({
-      success: true,
-      data: gym,
-      error: null,
-    });
+    return sendSuccess(res, gym);
   } catch (error) {
     logger.error(`Error fetching gym with id: ${id}: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };
 
@@ -199,11 +98,7 @@ export const updateGym: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
 
   if (!user?.id) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      error: 'User not authenticated',
-    });
+    return sendUnauthorized(res);
   }
 
   logger.info(`Updating gym with id: ${id}`, { userId: user.id });
@@ -211,46 +106,25 @@ export const updateGym: RequestHandler = async (req, res) => {
     const { name, address } = req.body;
     const ownerId = user.id;
 
-    const gym = await prisma.gym.findUnique({
-      where: { id },
-    });
+    const gym = await GymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
-      return res.status(404).json({
-        success: false,
-        data: null,
-        error: 'Gym not found',
-      });
+      return sendNotFound(res, 'Gym not found');
     }
 
     if (gym.ownerId !== ownerId) {
       logger.warn(`User ${ownerId} is not authorized to update gym with id: ${id}`);
-      return res.status(403).json({
-        success: false,
-        data: null,
-        error: 'You are not authorized to update this gym',
-      });
+      return sendForbidden(res, 'You are not authorized to update this gym');
     }
 
-    const updatedGym = await prisma.gym.update({
-      where: { id },
-      data: { name, address },
-    });
+    const updatedGym = await GymService.updateGym(id, { name, address });
 
     logger.info(`Successfully updated gym with id: ${id}`);
-    res.status(200).json({
-      success: true,
-      data: updatedGym,
-      error: null,
-    });
+    return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error updating gym with id: ${id}: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };
 
@@ -260,50 +134,30 @@ export const deleteGym: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
 
   if (!user?.id) {
-    return res.status(401).json({
-      success: false,
-      data: null,
-      error: 'User not authenticated',
-    });
+    return sendUnauthorized(res);
   }
 
   logger.info(`Deleting gym with id: ${id}`, { userId: user.id });
   try {
     const ownerId = user.id;
-    const gym = await prisma.gym.findUnique({
-      where: { id },
-    });
+    const gym = await GymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
-      return res.status(404).json({
-        success: false,
-        data: null,
-        error: 'Gym not found',
-      });
+      return sendNotFound(res, 'Gym not found');
     }
 
     if (gym.ownerId !== ownerId) {
       logger.warn(`User ${ownerId} is not authorized to delete gym with id: ${id}`);
-      return res.status(403).json({
-        success: false,
-        data: null,
-        error: 'You are not authorized to delete this gym',
-      });
+      return sendForbidden(res, 'You are not authorized to delete this gym');
     }
 
-    await prisma.gym.delete({
-      where: { id },
-    });
+    await GymService.deleteGym(id);
 
     logger.info(`Successfully deleted gym with id: ${id}`);
-    res.status(204).send();
+    return sendSuccess(res, null, 204);
   } catch (error) {
     logger.error(`Error deleting gym with id: ${id}: ${error}`);
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: 'Internal server error',
-    });
+    return sendInternalError(res);
   }
 };

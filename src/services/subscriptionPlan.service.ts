@@ -59,8 +59,15 @@ export const SubscriptionPlanService = {
     price: number;
     // New Flexible Fields
     durationValue: number;
-    durationUnit: PlanType; 
+    durationUnit?: PlanType; 
   }) {
+    // Validate durationValue is a positive integer
+    if (!Number.isInteger(data.durationValue) || data.durationValue <= 0) {
+      throw new Error('durationValue must be a positive integer');
+    }
+
+    const durationUnit = data.durationUnit ?? PlanType.MONTH;
+
     return prisma.gymSubscriptionPlan.create({
       data: {
         gymId: data.gymId,
@@ -68,7 +75,7 @@ export const SubscriptionPlanService = {
         description: data.description || null,
         price: data.price,
         durationValue: data.durationValue,
-        durationUnit: data.durationUnit,
+        durationUnit,
         isActive: true,
       },
     });

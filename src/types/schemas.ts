@@ -43,14 +43,17 @@ export const planCreateSchema = z.object({
   gymId: z.string().min(1, 'Gym ID is required'),
   name: z.string().min(1, 'Plan name is required'),
   description: z.string().optional(),
-  durationInMonths: z.number().int().positive('Duration must be positive'),
+  // Flexible duration fields to match Prisma `GymSubscriptionPlan`
+  durationValue: z.number().int().positive('Duration must be a positive integer'),
+  durationUnit: z.enum(['DAY', 'WEEK', 'MONTH', 'YEAR']).optional().default('MONTH'),
   price: z.number().int().nonnegative('Price must be non-negative'),
 });
 
 export const planUpdateSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  durationInMonths: z.number().int().positive().optional(),
+  durationValue: z.number().int().positive().optional(),
+  durationUnit: z.enum(['DAY', 'WEEK', 'MONTH', 'YEAR']).optional(),
   price: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
 });

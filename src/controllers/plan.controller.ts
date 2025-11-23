@@ -12,11 +12,18 @@ export const createPlan = async (
 ) => {
   try {
     const userId = req.user?.id;
-    const { gymId, name, description, durationInMonths, price } = req.body;
+    const { gymId, name, description, durationValue, durationUnit, price } = req.body;
 
-    if (!gymId || !name || !durationInMonths || price === undefined) {
+    if (!gymId || !name || durationValue === undefined || price === undefined) {
       logger.warn('Missing required fields for plan creation');
-      return sendBadRequest(res, 'Missing required fields: gymId, name, durationInMonths, price');
+      return sendBadRequest(res, 'Missing required fields: gymId, name, durationValue, price');
+    }
+
+    // Validate durationValue is a positive integer
+    const parsedDuration = Number(durationValue);
+    if (!Number.isFinite(parsedDuration) || !Number.isInteger(parsedDuration) || parsedDuration <= 0) {
+      logger.warn(`Invalid durationValue provided: ${durationValue}`);
+      return sendBadRequest(res, 'durationValue must be a positive integer');
     }
 
     // Verify user owns the gym
@@ -38,7 +45,8 @@ export const createPlan = async (
       gymId,
       name,
       description,
-      durationInMonths,
+      durationValue: parsedDuration,
+      durationUnit,
       price,
     });
 
@@ -111,7 +119,7 @@ export const updatePlan = async (
   try {
     const userId = req.user?.id;
     const { planId } = req.params;
-    const { name, description, durationInMonths, price, isActive } = req.body;
+    const { name, description, durationValue, durationUnit, price, isActive } = req.body;
 
     if (!planId) {
       logger.warn('planId is required');
@@ -133,13 +141,27 @@ export const updatePlan = async (
     }
 
     logger.info(`Updating plan: ${planId}`);
-    const updatedPlan = await SubscriptionPlanService.updatePlan(planId, {
+    const updates: any = {
       ...(name && { name }),
       ...(description !== undefined && { description }),
-      ...(durationInMonths && { durationInMonths }),
       ...(price !== undefined && { price }),
       ...(isActive !== undefined && { isActive }),
-    });
+    };
+
+    if (durationValue !== undefined) {
+      const parsed = Number(durationValue);
+      if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0) {
+        logger.warn(`Invalid durationValue provided for update: ${durationValue}`);
+        return sendBadRequest(res, 'durationValue must be a positive integer');
+      }
+      updates.durationValue = parsed;
+    }
+
+    if (durationUnit !== undefined) {
+      updates.durationUnit = durationUnit;
+    }
+
+    const updatedPlan = await SubscriptionPlanService.updatePlan(planId, updates);
 
     logger.info(`Plan updated successfully: ${planId}`);
     return sendSuccess(res, updatedPlan);

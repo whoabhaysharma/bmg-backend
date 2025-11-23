@@ -345,50 +345,9 @@
                   "    const jsonData = pm.response.json();",
                   "    ",
                   "    // CAPTURE SUBSCRIPTION ID",
-                  "    pm.collectionVariables.set('subscriptionId', jsonData.data.id);",
-                  "    console.log('✓ Subscription ID saved:', jsonData.data.id);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"planId\": \"{{planId}}\",\n  \"gymId\": \"{{gymId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/subscriptions/subscribe",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "subscriptions", "subscribe"]
-            }
-          }
-        },
-        {
-          "name": "Get My Subscriptions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get subscriptions\", function() {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.length > 0) {",
-                  "        pm.collectionVariables.set('subscriptionId', jsonData.data[0].id);",
-                  "        console.log('✓ Subscription ID refreshed:', jsonData.data[0].id);",
+                  "    if(jsonData.data && jsonData.data.id) {",
+                  "      pm.collectionVariables.set('subscriptionId', jsonData.data.id);",
+                  "      console.log('✓ Subscription ID saved:', jsonData.data.id);",
                   "    }",
                   "});"
                 ]
@@ -396,18 +355,88 @@
             }
           ],
           "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/subscriptions/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "subscriptions", "me"]
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json", "type": "text" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"planId\": \"{{planId}}\",\n  \"gymId\": \"{{gymId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/subscriptions", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions"] }
+          }
+        },
+        {
+          "name": "Get My Subscriptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test(\"Get subscriptions\", function() {",
+                "    const jsonData = pm.response.json();",
+                "    if (jsonData.data && jsonData.data.length > 0) {",
+                "        pm.collectionVariables.set('subscriptionId', jsonData.data[0].id);",
+                "        console.log('✓ Subscription ID refreshed:', jsonData.data[0].id);",
+                "    }",
+                "});"
+              ] }
             }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/my", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "my"] }
+          }
+        },
+        {
+          "name": "Get Active Subscription",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/active?gymId={{gymId}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "active"], "query": [{ "key": "gymId", "value": "{{gymId}}" }] }
+          }
+        },
+        {
+          "name": "Get Expiring Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/expiring?gymId={{gymId}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "expiring"], "query": [{ "key": "gymId", "value": "{{gymId}}" }] }
+          }
+        },
+        {
+          "name": "Get Gym Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/gym?gymId={{gymId}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "gym"], "query": [{ "key": "gymId", "value": "{{gymId}}" }] }
+          }
+        },
+        {
+          "name": "Get Subscription By ID",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "{{subscriptionId}}"] }
+          }
+        },
+        {
+          "name": "Get Subscription By Access Code",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/access/{{accessCode}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "access", "{{accessCode}}"] }
+          }
+        },
+        {
+          "name": "Update Subscription Status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CANCELLED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "{{subscriptionId}}", "status"] }
+          }
+        },
+        {
+          "name": "Delete Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{authToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}", "host": ["{{baseUrl}}"], "path": ["api", "subscriptions", "{{subscriptionId}}"] }
           }
         }
       ]

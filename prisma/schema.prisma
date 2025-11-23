@@ -95,6 +95,10 @@ model Payment {
   amount         Int
   method         String?
   status         PaymentStatus @default(PENDING)
+
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -134,6 +138,7 @@ enum Role {
 }
 
 enum SubscriptionStatus {
+  PENDING
   ACTIVE
   EXPIRED
   CANCELLED

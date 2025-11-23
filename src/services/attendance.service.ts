@@ -23,8 +23,27 @@ export const AttendanceService = {
   },
 
   async createAttendance(data: { userId: string; gymId: string; date: Date; checkIn?: Date; checkOut?: Date }) {
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId: data.userId,
+        gymId: data.gymId,
+        status: 'ACTIVE',
+        endDate: {
+          gte: new Date(),
+        },
+      },
+    });
+
+    if (!subscription) {
+      throw new Error('User does not have an active subscription for this gym');
+    }
+
+    const { date, ...rest } = data;
     return prisma.attendance.create({
-      data,
+      data: {
+        ...rest,
+        subscriptionId: subscription.id,
+      },
     });
   },
 

@@ -123,6 +123,25 @@ export class UserService {
   }
 
   /**
+   * Remove a role from a user
+   */
+  async removeRole(userId: string, role: Role): Promise<User> {
+    const user = await this.getUserById(userId);
+
+    if (!user) throw new Error('User not found');
+    if (!user.roles.includes(role)) throw new Error('Role not assigned to user');
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        roles: {
+          set: user.roles.filter((r) => r !== role),
+        },
+      },
+    });
+  }
+
+  /**
    * Get User Profile with deep relations
    * Fetches owned gyms and active subscriptions
    */

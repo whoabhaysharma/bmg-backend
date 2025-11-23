@@ -9,32 +9,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Google Auth",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Successful authentication\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.have.property('token');",
-                  "});",
-                  "",
-                  "const jsonData = pm.response.json();",
-                  "if (jsonData.data && jsonData.data.token) {",
-                  "    pm.collectionVariables.set('authToken', jsonData.data.token);",
-                  "    console.log('✓ Auth token updated successfully');",
-                  "    console.log('Token:', jsonData.data.token.substring(0, 20) + '...');",
-                  "} else {",
-                  "    console.log('✗ No token found in response');",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Send OTP",
           "request": {
             "method": "POST",
             "header": [
@@ -46,12 +21,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firebaseToken\": \"<firebase_id_token>\"\n}"
+              "raw": "{\n  \"phoneNumber\": \"<phone_number>\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/google",
+              "raw": "{{baseUrl}}/api/auth/send-otp",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "google"]
+              "path": ["api", "auth", "send-otp"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"<phone_number>\",\n  \"otp\": \"<otp>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-otp"]
             }
           }
         }
@@ -62,23 +59,6 @@
       "item": [
         {
           "name": "Get My Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get profile successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('email');",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -91,7 +71,6 @@
               ]
             },
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/profile",
               "host": ["{{baseUrl}}"],
@@ -101,24 +80,6 @@
         },
         {
           "name": "Update My Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Update profile successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    const requestBody = JSON.parse(pm.request.body.raw);",
-                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
-                  "    pm.expect(jsonData.data.mobileNumber).to.equal(requestBody.mobileNumber);",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -146,6 +107,90 @@
               "raw": "{{baseUrl}}/api/users/profile",
               "host": ["{{baseUrl}}"],
               "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update or Remove User Role",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ADMIN\",\n  \"action\": \"add\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id", "role"]
             }
           }
         }

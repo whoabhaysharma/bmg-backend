@@ -20,7 +20,7 @@ router.put('/profile', isAuthenticated, updateMyProfile);
 router.get('/', isAuthenticated, isAdmin, getAllUsers); // Get all users
 router.delete('/:id', isAuthenticated, isAdmin, deleteUser); // Soft delete user
 router.patch('/:id/restore', isAuthenticated, isAdmin, restoreUser); // Restore user
-router.post('/role', isAuthenticated, isAdmin, addRole); // Add role to user
+router.post('/:id/role', isAuthenticated, isAdmin, addRole); // Add or remove role from user
 
 // Extended profile route
 router.get('/:id/profile', isAuthenticated, getProfile); // Get extended profile

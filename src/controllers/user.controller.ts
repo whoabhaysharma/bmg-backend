@@ -22,9 +22,7 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    const updateData = { ...req.body };
-    delete updateData.roles;
-    delete updateData.gymsOwned;
+    const updateData = { name: req.body.name }; // Only allow updating the name
 
     const updatedUser = await userService.updateUser(authReq.user.id, updateData);
     res.json(updatedUser);
@@ -180,7 +178,7 @@ export class UserController {
   }
 
   /**
-   * Add Role to user (e.g. Upgrade to Owner)
+   * Add or Remove Role to user
    * Auth: ADMIN only
    * Route: POST /users/:id/role
    */
@@ -192,17 +190,28 @@ export class UserController {
         return res.status(403).json({ error: 'Forbidden: Admins only' });
       }
 
-      const { id } = req.params; // Get user ID from URL params
-      const { role } = req.body; // Get role from request body
+      const { id } = req.params; // User ID
+      const { role, action } = req.body; // Role and action (add or remove)
 
-      if (!Object.values(Role).includes(role)) {
-        return res.status(400).json({ error: 'Invalid role provided' });
+      if (!role || !['add', 'remove'].includes(action)) {
+        return res.status(400).json({ error: 'Invalid role or action' });
       }
 
-      const user = await userService.addRole(id, role);
-      res.json(user);
-    } catch (error) {
-      res.status(400).json({ error: 'Failed to add role' });
+      const user = await userService.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      let updatedUser;
+      if (action === 'add') {
+        updatedUser = await userService.addRole(id, role);
+      } else if (action === 'remove') {
+        updatedUser = await userService.removeRole(id, role);
+      }
+
+      res.json(updatedUser);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to update role', details: error.message });
     }
   }
 

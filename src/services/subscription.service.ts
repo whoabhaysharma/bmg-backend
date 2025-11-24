@@ -1,10 +1,7 @@
-import { PrismaClient, SubscriptionStatus, PlanType, Payment } from '@prisma/client';
+import { SubscriptionStatus, PlanType } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { paymentService } from './payment.service.js';
 import { v4 as uuidv4 } from 'uuid';
-
-// --- Configuration & Initialization ---
-
-const prisma = new PrismaClient();
 
 // Constants for Access Code Generation
 const ACCESS_CODE_LENGTH = 8;
@@ -59,24 +56,45 @@ class SubscriptionService {
    * * @returns An object containing the created subscription and the Razorpay order details.
    */
   async createSubscription(userId: string, planId: string, gymId: string) {
+    // 1. Fetch Plan, User, and Gym details
     const plan = await prisma.gymSubscriptionPlan.findUnique({
       where: { id: planId },
-      select: { id: true, price: true, durationValue: true, durationUnit: true }, // Select only necessary fields
+      select: { id: true, name: true, price: true, durationValue: true, durationUnit: true },
     });
 
     if (!plan) {
       throw new Error('SUBSCRIPTION_PLAN_NOT_FOUND');
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, mobileNumber: true },
+    });
+
+    if (!user) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    const gym = await prisma.gym.findUnique({
+      where: { id: gymId },
+      select: { id: true, name: true },
+    });
+
+    if (!gym) {
+      throw new Error('GYM_NOT_FOUND');
+    }
+
     // Set temporary dates. Actual start/end dates are determined upon payment success.
     const now = new Date();
 
+    // 2. Create the Subscription record (PENDING)
+    // We create this first to have an ID for the receipt.
+    // If the Razorpay order fails, we should delete this to avoid zombie records.
     const subscription = await prisma.subscription.create({
       data: {
         userId,
         gymId,
         planId,
-        // Set initial dates to NOW, they will be updated on payment success.
         startDate: now,
         endDate: now,
         status: SubscriptionStatus.PENDING,
@@ -84,14 +102,21 @@ class SubscriptionService {
       },
     });
 
-    // 1. Create Razorpay Order (using subscription ID as receipt)
-    const order = await paymentService.createOrder(
-      plan.price,
-      subscription.id, // receipt
-      'INR' // currency
-    );
+    let order;
+    try {
+      // 3. Create Razorpay Order (using subscription ID as receipt)
+      order = await paymentService.createOrder(
+        plan.price,
+        subscription.id, // receipt
+        'INR' // currency
+      );
+    } catch (error) {
+      // If order creation fails, cleanup the subscription
+      await prisma.subscription.delete({ where: { id: subscription.id } });
+      throw error;
+    }
 
-    // 2. Save PENDING payment record
+    // 4. Save PENDING payment record
     await prisma.payment.create({
       data: {
         subscriptionId: subscription.id,
@@ -101,7 +126,28 @@ class SubscriptionService {
       },
     });
 
-    return { subscription, order };
+    // 5. Construct Intuitive Response
+    return {
+      subscription,
+      order,
+      // Provide pre-filled data for the frontend
+      razorpayOptions: {
+        key: process.env.RAZORPAY_KEY_ID, // Use environment variable
+        amount: order.amount, // Amount in paise from the order object
+        currency: order.currency,
+        name: gym.name, // Display Gym Name in the payment modal
+        description: plan.name, // Display Plan Name as description
+        order_id: order.id,
+        prefill: {
+          name: user.name || '',
+          contact: user.mobileNumber || '',
+        },
+        notes: {
+          subscriptionId: subscription.id,
+          gymId: gym.id,
+        }
+      }
+    };
   }
 
   /**
@@ -114,8 +160,8 @@ class SubscriptionService {
     razorpayPaymentId: string,
     razorpaySignature: string
   ) {
-    // 1. Fetch Payment Record with necessary relations
-    const payment = await prisma.payment.findUnique({
+    // 1. Fetch Payment Record with necessary relations using findFirst since razorpayOrderId is not unique in schema
+    const payment = await prisma.payment.findFirst({
       where: { razorpayOrderId },
       include: {
         subscription: {
@@ -132,6 +178,11 @@ class SubscriptionService {
       throw new Error('PAYMENT_RECORD_NOT_FOUND');
     }
 
+    // Ensure subscription is loaded
+    if (!payment.subscription) {
+       throw new Error('SUBSCRIPTION_NOT_FOUND_FOR_PAYMENT');
+    }
+
     // Check if payment is already completed to prevent double processing
     if (payment.status === 'COMPLETED') {
       return prisma.subscription.findUnique({ where: { id: payment.subscription.id } });
@@ -146,50 +197,39 @@ class SubscriptionService {
 
     if (!isValid) {
       // Update payment status to FAILED before throwing the error
-      await this.updatePaymentStatus(payment.id, 'FAILED');
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'FAILED' }
+      });
       throw new Error('INVALID_PAYMENT_SIGNATURE');
     }
 
-    // 3. Update Payment Status to COMPLETED
-    await this.updatePaymentStatus(payment.id, 'COMPLETED', {
-      razorpayPaymentId,
-      razorpaySignature,
-    });
-
-    // 4. Activate Subscription and Update Dates
+    // 3. Update Payment Status and Activate Subscription Atomically
     const { durationValue, durationUnit } = payment.subscription.plan;
     const startDate = new Date();
     const endDate = calculateSubscriptionEndDate(startDate, durationValue, durationUnit);
 
-    const updatedSubscription = await prisma.subscription.update({
-      where: { id: payment.subscription.id },
-      data: {
-        status: SubscriptionStatus.ACTIVE,
-        startDate,
-        endDate,
-      },
-    });
+    const [updatedPayment, updatedSubscription] = await prisma.$transaction([
+      prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'COMPLETED',
+          razorpayPaymentId,
+          razorpaySignature,
+        },
+      }),
+      prisma.subscription.update({
+        where: { id: payment.subscription.id },
+        data: {
+          status: SubscriptionStatus.ACTIVE,
+          startDate,
+          endDate,
+        },
+      }),
+    ]);
 
     return updatedSubscription;
   }
-
-  /**
-   * Internal helper to update payment status with optional Razorpay details.
-   */
-  private async updatePaymentStatus(
-    paymentId: string,
-    status: Payment['status'],
-    razorpayDetails?: { razorpayPaymentId: string; razorpaySignature: string }
-  ) {
-    await prisma.payment.update({
-      where: { id: paymentId },
-      data: {
-        status,
-        ...razorpayDetails,
-      },
-    });
-  }
-
 }
 
 export const subscriptionService = new SubscriptionService();

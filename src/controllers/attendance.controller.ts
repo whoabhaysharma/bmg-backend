@@ -95,6 +95,7 @@ export const checkIn = async (
       data: {
         userId: req.user.id,
         gymId,
+        subscriptionId: activeSubscription.id, // Added subscriptionId
         checkIn: new Date(),
       },
       include: {

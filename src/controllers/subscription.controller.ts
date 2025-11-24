@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import { subscriptionService } from '../services/subscription.service.js';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma'; // Use singleton prisma
 
 class SubscriptionController {
   async createSubscription(req: Request, res: Response) {
@@ -16,6 +14,7 @@ class SubscriptionController {
 
       const result = await subscriptionService.createSubscription(userId, planId, gymId);
 
+      // result now contains { subscription, order, razorpayOptions }
       res.status(201).json({
         message: 'Subscription created and payment order generated',
         ...result,

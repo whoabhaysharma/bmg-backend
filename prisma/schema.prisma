@@ -88,20 +88,20 @@ model Subscription {
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  subscriptionId String        @unique
-  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  id                String        @id @default(cuid())
+  subscriptionId    String        @unique
+  subscription      Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   
-  amount         Int
-  method         String?
-  status         PaymentStatus @default(PENDING)
+  amount            Int
+  method            String?
+  status            PaymentStatus @default(PENDING)
 
-  razorpayOrderId   String?
+  razorpayOrderId   String?       @unique   // <-- ADDED
   razorpayPaymentId String?
   razorpaySignature String?
   
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 }
 
 model Attendance {

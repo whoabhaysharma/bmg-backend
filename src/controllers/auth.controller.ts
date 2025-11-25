@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
-import * as authService from '../services';
+import { AuthService } from '../services';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
 export const sendOtp = async (
@@ -17,7 +17,7 @@ export const sendOtp = async (
       return sendBadRequest(res, 'Phone number is required');
     }
 
-    const otp = await authService.generateOtp(phoneNumber);
+    const otp = await AuthService.generateOtp(phoneNumber);
 
     // In a real application, you would send this OTP via SMS provider (e.g., Twilio)
     // For now, we'll log it to the console for testing
@@ -42,13 +42,13 @@ export const verifyOtp = async (
       return sendBadRequest(res, 'Phone number and OTP are required');
     }
 
-    const isValid = await authService.verifyOtp(phoneNumber, otp);
+    const isValid = await AuthService.verifyOtp(phoneNumber, otp);
 
     if (!isValid) {
       return sendBadRequest(res, 'Invalid or expired OTP');
     }
 
-    const user = await authService.findOrCreateUser(phoneNumber);
+    const user = await AuthService.findOrCreateUser(phoneNumber);
 
     // Sign JWT
     const token = jwt.sign(

@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware';
-import { GymService } from '../services';
 import logger from '../lib/logger';
 import { getAuthUser } from '../utils/getAuthUser';
+import { gymService } from '../services'
 import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError } from '../utils/response';
 
 // Create a new gym
@@ -19,7 +19,7 @@ export const createGym: RequestHandler = async (req, res) => {
     const ownerId = authReq.user.id;
 
     // Only OWNER role can create gym (enforced by isOwner middleware in routes)
-    const gym = await GymService.createGym({
+    const gym = await gymService.createGym({
       name,
       address,
       ownerId,
@@ -38,7 +38,7 @@ export const getAllGyms: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
   logger.info('Fetching all gyms', { userId: user?.id });
   try {
-    const gyms = await GymService.getAllGyms();
+    const gyms = await gymService.getAllGyms();
     logger.info('Successfully fetched all gyms');
     return sendSuccess(res, gyms);
   } catch (error) {
@@ -61,7 +61,7 @@ export const getMyGyms: RequestHandler = async (req, res) => {
     logger.info(`Fetching gyms owned by user: ${userId}`);
 
     // For now, filter all gyms by owner. In future, we can add a dedicated service method
-    const allGyms = await GymService.getAllGyms();
+    const allGyms = await gymService.getAllGyms();
     const myGyms = allGyms.filter((gym) => gym.ownerId === userId);
 
     logger.info(`Successfully fetched ${myGyms.length} gyms for user: ${userId}`);
@@ -77,7 +77,7 @@ export const getGymById: RequestHandler = async (req, res) => {
   const { id } = req.params;
   logger.info(`Fetching gym with id: ${id}`);
   try {
-    const gym = await GymService.getGymById(id);
+    const gym = await gymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
@@ -106,7 +106,7 @@ export const updateGym: RequestHandler = async (req, res) => {
     const { name, address } = req.body;
     const ownerId = user.id;
 
-    const gym = await GymService.getGymById(id);
+    const gym = await gymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
@@ -118,7 +118,7 @@ export const updateGym: RequestHandler = async (req, res) => {
       return sendForbidden(res, 'You are not authorized to update this gym');
     }
 
-    const updatedGym = await GymService.updateGym(id, { name, address });
+    const updatedGym = await gymService.updateGym(id, { name, address });
 
     logger.info(`Successfully updated gym with id: ${id}`);
     return sendSuccess(res, updatedGym);
@@ -140,7 +140,7 @@ export const deleteGym: RequestHandler = async (req, res) => {
   logger.info(`Deleting gym with id: ${id}`, { userId: user.id });
   try {
     const ownerId = user.id;
-    const gym = await GymService.getGymById(id);
+    const gym = await gymService.getGymById(id);
 
     if (!gym) {
       logger.warn(`Gym not found with id: ${id}`);
@@ -152,7 +152,7 @@ export const deleteGym: RequestHandler = async (req, res) => {
       return sendForbidden(res, 'You are not authorized to delete this gym');
     }
 
-    await GymService.deleteGym(id);
+    await gymService.deleteGym(id);
 
     logger.info(`Successfully deleted gym with id: ${id}`);
     return sendSuccess(res, null, 204);
@@ -172,11 +172,11 @@ export const verifyGym: RequestHandler = async (req, res) => {
   }
 
   try {
-    const gym = await GymService.getGymById(id);
+    const gym = await gymService.getGymById(id);
     if (!gym) {
       return sendNotFound(res, 'Gym not found');
     }
-    const updatedGym = await GymService.setGymVerified(id, true);
+    const updatedGym = await gymService.setGymVerified(id, true);
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error verifying gym with id: ${id}: ${error}`);
@@ -194,11 +194,11 @@ export const unverifyGym: RequestHandler = async (req, res) => {
   }
 
   try {
-    const gym = await GymService.getGymById(id);
+    const gym = await gymService.getGymById(id);
     if (!gym) {
       return sendNotFound(res, 'Gym not found');
     }
-    const updatedGym = await GymService.setGymVerified(id, false);
+    const updatedGym = await gymService.setGymVerified(id, false);
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error unverifying gym with id: ${id}: ${error}`);

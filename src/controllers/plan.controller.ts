@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
-import { SubscriptionPlanService, GymService } from '../services';
+import { gymService, subscriptionPlanService } from '../services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
 
 // Create a new subscription plan
@@ -27,7 +27,7 @@ export const createPlan = async (
 
     // Verify user owns the gym
     logger.info(`Verifying gym ownership for userId: ${userId}, gymId: ${gymId}`);
-    const gym = await GymService.getGymById(gymId);
+    const gym = await gymService.getGymById(gymId);
 
     if (!gym) {
       logger.warn(`Gym not found: ${gymId}`);
@@ -40,7 +40,7 @@ export const createPlan = async (
     }
 
     logger.info(`Creating plan for gymId: ${gymId}, name: ${name}`);
-    const plan = await SubscriptionPlanService.createPlan({
+    const plan = await subscriptionPlanService.createPlan({
       gymId,
       name,
       description,
@@ -71,7 +71,7 @@ export const getPlansByGym = async (
     }
 
     logger.info(`Fetching plans for gymId: ${gymId}`);
-    const plans = await SubscriptionPlanService.getPlansByGym(gymId);
+    const plans = await subscriptionPlanService.getPlansByGym(gymId);
 
     logger.info(`Found ${plans.length} plans for gymId: ${gymId}`);
     return sendSuccess(res, plans);
@@ -95,7 +95,7 @@ export const getPlanById = async (
     }
 
     logger.info(`Fetching plan: ${planId}`);
-    const plan = await SubscriptionPlanService.getPlanById(planId);
+    const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -126,7 +126,7 @@ export const updatePlan = async (
     }
 
     logger.info(`Fetching plan for update: ${planId}`);
-    const plan = await SubscriptionPlanService.getPlanById(planId);
+    const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -160,7 +160,7 @@ export const updatePlan = async (
       updates.durationUnit = durationUnit;
     }
 
-    const updatedPlan = await SubscriptionPlanService.updatePlan(planId, updates);
+    const updatedPlan = await subscriptionPlanService.updatePlan(planId, updates);
 
     logger.info(`Plan updated successfully: ${planId}`);
     return sendSuccess(res, updatedPlan);
@@ -185,7 +185,7 @@ export const deletePlan = async (
     }
 
     logger.info(`Fetching plan for deletion: ${planId}`);
-    const plan = await SubscriptionPlanService.getPlanById(planId);
+    const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -199,7 +199,7 @@ export const deletePlan = async (
     }
 
     logger.info(`Deleting plan: ${planId}`);
-    await SubscriptionPlanService.deletePlan(planId);
+    await subscriptionPlanService.deletePlan(planId);
 
     logger.info(`Plan deleted successfully: ${planId}`);
     return sendSuccess(res, { message: 'Plan deleted successfully' });
@@ -223,7 +223,7 @@ export const getActivePlansByGym = async (
     }
 
     logger.info(`Fetching active plans for gymId: ${gymId}`);
-    const plans = await SubscriptionPlanService.getActivePlansByGym(gymId);
+    const plans = await subscriptionPlanService.getActivePlansByGym(gymId);
 
     logger.info(`Found ${plans.length} active plans for gymId: ${gymId}`);
     return sendSuccess(res, plans);

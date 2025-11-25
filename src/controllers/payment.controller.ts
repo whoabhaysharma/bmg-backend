@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { handlePaymentSuccess } from '../services';
+import { paymentService } from '../services';
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
@@ -9,7 +9,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Missing required payment details' });
     }
 
-    const subscription = await handlePaymentSuccess(
+    const subscription = await paymentService.verifyPaymentSignature(
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature

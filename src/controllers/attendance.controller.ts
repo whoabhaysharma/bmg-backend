@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middleware';
-import prisma from '../lib/prisma';
+import { attendanceService } from '../services';
 import logger from '../lib/logger';
 
 // Get my attendance history
@@ -20,25 +20,10 @@ export const getMyAttendance = async (
   logger.info('Fetching attendance history', { userId: req.user.id, gymId });
 
   try {
-    const where = {
-      userId: req.user.id,
-      ...(gymId ? { gymId: String(gymId) } : {}),
-    };
-
-    const attendance = await prisma.attendance.findMany({
-      where,
-      include: {
-        gym: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        checkIn: 'desc',
-      },
-    });
+    const attendance = await attendanceService.getUserAttendance(
+      req.user.id,
+      gymId ? String(gymId) : undefined
+    );
 
     logger.info('Successfully fetched attendance history', {
       userId: req.user.id,
@@ -73,39 +58,8 @@ export const checkIn = async (
   logger.info('Processing gym check-in', { userId: req.user.id, gymId });
 
   try {
-    // Verify active subscription
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId: req.user.id,
-        gymId,
-        status: 'ACTIVE',
-      },
-    });
-
-    if (!activeSubscription) {
-      logger.warn('No active subscription found', { userId: req.user.id, gymId });
-      return res.status(403).json({
-        success: false,
-        error: 'No active subscription found for this gym',
-      });
-    }
-
     // Create attendance record
-    const attendance = await prisma.attendance.create({
-      data: {
-        userId: req.user.id,
-        gymId,
-        checkIn: new Date(),
-      },
-      include: {
-        gym: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const attendance = await attendanceService.checkIn(req.user.id, gymId);
 
     logger.info('Successfully checked in', {
       userId: req.user.id,
@@ -141,45 +95,13 @@ export const checkOut = async (
   logger.info('Processing gym check-out', { userId: req.user.id, attendanceId });
 
   try {
-    // Find attendance record
-    const attendance = await prisma.attendance.findFirst({
-      where: {
-        id: attendanceId,
-        userId: req.user.id,
-        checkOut: null,
-      },
-    });
-
-    if (!attendance) {
-      logger.warn('Active attendance record not found', { userId: req.user.id, attendanceId });
-      return res.status(404).json({
-        success: false,
-        error: 'Active attendance record not found',
-      });
-    }
-
     // Update attendance record with check out time
-    const updatedAttendance = await prisma.attendance.update({
-      where: {
-        id: attendanceId,
-      },
-      data: {
-        checkOut: new Date(),
-      },
-      include: {
-        gym: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const updatedAttendance = await attendanceService.checkOut(req.user.id, attendanceId);
 
     logger.info('Successfully checked out', {
       userId: req.user.id,
       attendanceId,
-      duration: Math.round((updatedAttendance.checkOut!.getTime() - attendance.checkIn!.getTime()) / 1000 / 60), // Duration in minutes
+      duration: Math.round((updatedAttendance.checkOut!.getTime() - updatedAttendance.checkIn!.getTime()) / 1000 / 60), // Duration in minutes
     });
 
     return res.status(200).json({

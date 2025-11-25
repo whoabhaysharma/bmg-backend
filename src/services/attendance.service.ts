@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const AttendanceService = {
+export const attendanceService = {
   async getAllAttendanceLogs() {
     return prisma.attendance.findMany({
       include: {
@@ -22,11 +22,33 @@ export const AttendanceService = {
     });
   },
 
-  async createAttendance(data: { userId: string; gymId: string; date: Date; checkIn?: Date; checkOut?: Date }) {
+  async getUserAttendance(userId: string, gymId?: string) {
+    const where = {
+      userId,
+      ...(gymId ? { gymId } : {}),
+    };
+
+    return prisma.attendance.findMany({
+      where,
+      include: {
+        gym: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        checkIn: 'desc',
+      },
+    });
+  },
+
+  async checkIn(userId: string, gymId: string) {
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: data.userId,
-        gymId: data.gymId,
+        userId,
+        gymId,
         status: 'ACTIVE',
         endDate: {
           gte: new Date(),
@@ -38,11 +60,51 @@ export const AttendanceService = {
       throw new Error('User does not have an active subscription for this gym');
     }
 
-    const { date, ...rest } = data;
     return prisma.attendance.create({
       data: {
-        ...rest,
+        userId,
+        gymId,
         subscriptionId: subscription.id,
+        checkIn: new Date(),
+      },
+      include: {
+        gym: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  },
+
+  async checkOut(userId: string, attendanceId: string) {
+    const attendance = await prisma.attendance.findFirst({
+      where: {
+        id: attendanceId,
+        userId,
+        checkOut: null,
+      },
+    });
+
+    if (!attendance) {
+      throw new Error('Active attendance record not found');
+    }
+
+    return prisma.attendance.update({
+      where: {
+        id: attendanceId,
+      },
+      data: {
+        checkOut: new Date(),
+      },
+      include: {
+        gym: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
   },

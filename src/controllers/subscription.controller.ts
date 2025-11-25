@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createSubscription as createSubscriptionService } from '../services';
+import { subscriptionService } from '../services';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ export const createSubscription = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Plan ID and Gym ID are required' });
     }
 
-    const result = await createSubscriptionService(userId, planId, gymId);
+    const result = await subscriptionService.createSubscription(userId, planId, gymId);
 
     res.status(201).json({
       message: 'Subscription created and payment order generated',

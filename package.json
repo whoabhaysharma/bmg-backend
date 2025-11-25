@@ -12,7 +12,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "test": "jest"
+    "test": "node -r dotenv/config node_modules/.bin/jest",
+    "test:e2e": "node -r dotenv/config node_modules/.bin/jest --runInBand --detectOpenHandles"
   },
   "keywords": [],
   "author": "",
@@ -39,6 +40,9 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/jest": "^30.0.0",
@@ -48,6 +52,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "babel-jest": "^30.2.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",

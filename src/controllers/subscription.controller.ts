@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createSubscription as createSubscriptionService } from '../services/subscription.service';
+import { createSubscription as createSubscriptionService } from '../services';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

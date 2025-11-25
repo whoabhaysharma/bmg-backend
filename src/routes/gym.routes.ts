@@ -8,7 +8,7 @@ import {
   deleteGym,
   verifyGym,
   unverifyGym,
-} from '../controllers/gym.controller';
+} from '../controllers';
 import { isAuthenticated } from '../middleware';
 import { authorize } from '../middleware/authorize';
 import { Role } from '@prisma/client';

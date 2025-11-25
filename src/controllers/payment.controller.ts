@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { handlePaymentSuccess } from '../services/subscription.service';
+import { handlePaymentSuccess } from '../services';
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {

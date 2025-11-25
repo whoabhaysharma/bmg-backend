@@ -7,7 +7,7 @@ import {
     restoreUser,
     addRole,
     getProfile,
-} from '../controllers/user.controller';
+} from '../controllers';
 import { isAuthenticated, isAdmin } from '../middleware';
 
 const router = Router();

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
-import * as authService from '../services/auth.service';
+import * as authService from '../services';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
 export const sendOtp = async (

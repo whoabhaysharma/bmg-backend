@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import NodeCache from 'node-cache';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
-import { userService } from '../services/user.service';
+import { userService } from '../services';
 
 // We update the interface to use the full Prisma User type.
 export interface AuthenticatedRequest extends Request {

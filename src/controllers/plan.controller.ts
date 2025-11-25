@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
-import { SubscriptionPlanService } from '../services/subscriptionPlan.service';
-import { GymService } from '../services/gym.service';
+import { SubscriptionPlanService, GymService } from '../services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
 
 // Create a new subscription plan

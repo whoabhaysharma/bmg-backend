@@ -3,7 +3,7 @@ import {
   getMyAttendance,
   checkIn,
   checkOut,
-} from '../controllers/attendance.controller';
+} from '../controllers';
 import { isAuthenticated } from '../middleware';
 
 const router = Router();

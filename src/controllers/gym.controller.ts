@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware';
-import { GymService } from '../services/gym.service';
+import { GymService } from '../services';
 import logger from '../lib/logger';
 import { getAuthUser } from '../utils/getAuthUser';
 import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError } from '../utils/response';

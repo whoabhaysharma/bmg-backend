@@ -3,6 +3,7 @@ import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
 import { gymService, subscriptionPlanService } from '../services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
+import { Role } from '@prisma/client'; // Assuming Role enum is available
 
 // Create a new subscription plan
 export const createPlan = async (
@@ -12,6 +13,10 @@ export const createPlan = async (
   try {
     const userId = req.user?.id;
     const { gymId, name, description, durationValue, durationUnit, price } = req.body;
+
+    if (!userId) {
+      return sendForbidden(res, 'Authentication required.');
+    }
 
     if (!gymId || !name || durationValue === undefined || price === undefined) {
       logger.warn('Missing required fields for plan creation');
@@ -25,8 +30,8 @@ export const createPlan = async (
       return sendBadRequest(res, 'durationValue must be a positive integer');
     }
 
-    // Verify user owns the gym
-    logger.info(`Verifying gym ownership for userId: ${userId}, gymId: ${gymId}`);
+    // Verify user owns the gym OR is an Admin
+    logger.info(`Verifying gym ownership/Admin role for userId: ${userId}, gymId: ${gymId}`);
     const gym = await gymService.getGymById(gymId);
 
     if (!gym) {
@@ -34,9 +39,13 @@ export const createPlan = async (
       return sendNotFound(res, 'Gym not found');
     }
 
-    if (gym.ownerId !== userId) {
-      logger.warn(`Unauthorized: User ${userId} does not own gym ${gymId}`);
-      return sendForbidden(res, 'You do not own this gym');
+    // Authorization Check: Must be the owner OR an Admin
+    const isOwner = gym.ownerId === userId;
+    const isAdmin = req.user?.roles?.includes(Role.ADMIN);
+
+    if (!isOwner && !isAdmin) {
+      logger.warn(`Unauthorized: User ${userId} does not own gym ${gymId} and is not Admin`);
+      return sendForbidden(res, 'You do not own this gym or have administrative privileges');
     }
 
     logger.info(`Creating plan for gymId: ${gymId}, name: ${name}`);
@@ -70,6 +79,9 @@ export const getPlansByGym = async (
       return sendBadRequest(res, 'gymId is required');
     }
 
+    // Note: This endpoint is public, allowing anyone to view plans for a gym.
+    // If plans should only be visible to owners/admins, this endpoint must also be secured.
+
     logger.info(`Fetching plans for gymId: ${gymId}`);
     const plans = await subscriptionPlanService.getPlansByGym(gymId);
 
@@ -83,11 +95,16 @@ export const getPlansByGym = async (
 
 // Get a single plan by ID
 export const getPlanById = async (
-  req: Request,
+  req: AuthenticatedRequest, // Changed to AuthenticatedRequest to access user details
   res: Response
 ) => {
   try {
+    const userId = req.user?.id;
     const { planId } = req.params;
+
+    if (!userId) {
+      return sendForbidden(res, 'Authentication required.');
+    }
 
     if (!planId) {
       logger.warn('planId is required');
@@ -95,11 +112,21 @@ export const getPlanById = async (
     }
 
     logger.info(`Fetching plan: ${planId}`);
+    // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
     const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
       return sendNotFound(res, 'Plan not found');
+    }
+
+    // Authorization Check: Must be the owner OR an Admin
+    const isOwner = plan.gym.ownerId === userId;
+    const isAdmin = req.user?.roles?.includes(Role.ADMIN);
+
+    if (!isOwner && !isAdmin) {
+      logger.warn(`Forbidden: User ${userId} is unauthorized to view plan ${planId}`);
+      return sendForbidden(res, 'You are not authorized to view this plan');
     }
 
     logger.info(`Plan found: ${planId}`);
@@ -120,12 +147,17 @@ export const updatePlan = async (
     const { planId } = req.params;
     const { name, description, durationValue, durationUnit, price, isActive } = req.body;
 
+    if (!userId) {
+      return sendForbidden(res, 'Authentication required.');
+    }
+
     if (!planId) {
       logger.warn('planId is required');
       return sendBadRequest(res, 'planId is required');
     }
 
     logger.info(`Fetching plan for update: ${planId}`);
+    // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
     const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
@@ -133,10 +165,13 @@ export const updatePlan = async (
       return sendNotFound(res, 'Plan not found');
     }
 
-    // Verify user owns the gym
-    if (plan.gym.ownerId !== userId) {
-      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId}`);
-      return sendForbidden(res, 'You do not own this gym');
+    // Authorization Check: Must be the owner OR an Admin
+    const isOwner = plan.gym.ownerId === userId;
+    const isAdmin = req.user?.roles?.includes(Role.ADMIN);
+
+    if (!isOwner && !isAdmin) {
+      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId} and is not Admin`);
+      return sendForbidden(res, 'You do not own this plan or have administrative privileges');
     }
 
     logger.info(`Updating plan: ${planId}`);
@@ -179,12 +214,17 @@ export const deletePlan = async (
     const userId = req.user?.id;
     const { planId } = req.params;
 
+    if (!userId) {
+      return sendForbidden(res, 'Authentication required.');
+    }
+
     if (!planId) {
       logger.warn('planId is required');
       return sendBadRequest(res, 'planId is required');
     }
 
     logger.info(`Fetching plan for deletion: ${planId}`);
+    // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
     const plan = await subscriptionPlanService.getPlanById(planId);
 
     if (!plan) {
@@ -192,17 +232,21 @@ export const deletePlan = async (
       return sendNotFound(res, 'Plan not found');
     }
 
-    // Verify user owns the gym
-    if (plan.gym.ownerId !== userId) {
-      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId}`);
-      return sendForbidden(res, 'You do not own this gym');
+    // Authorization Check: Must be the owner OR an Admin
+    const isOwner = plan.gym.ownerId === userId;
+    const isAdmin = req.user?.roles?.includes(Role.ADMIN);
+
+    if (!isOwner && !isAdmin) {
+      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId} and is not Admin`);
+      return sendForbidden(res, 'You do not own this plan or have administrative privileges');
     }
 
     logger.info(`Deleting plan: ${planId}`);
     await subscriptionPlanService.deletePlan(planId);
 
     logger.info(`Plan deleted successfully: ${planId}`);
-    return sendSuccess(res, { message: 'Plan deleted successfully' });
+    // Standard practice for a successful DELETE operation is 204 No Content
+    return res.status(204).send();
   } catch (error) {
     logger.error(`Error deleting plan: ${error}`);
     return sendInternalError(res, 'Failed to delete plan');

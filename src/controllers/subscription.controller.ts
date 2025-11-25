@@ -7,16 +7,20 @@ const prisma = new PrismaClient();
 export const createSubscription = async (req: Request, res: Response) => {
   try {
     const { planId, gymId } = req.body;
-    const userId = (req as any).user.id; // Assuming isAuthenticated middleware adds user to req
+    // Assuming isAuthenticated middleware adds user to req
+    const userId = (req as any).user.id;
 
     if (!planId || !gymId) {
       return res.status(400).json({ message: 'Plan ID and Gym ID are required' });
     }
 
+    // This service call handles creating the pending subscription record
+    // and generating the payment order via the payment gateway.
     const result = await subscriptionService.createSubscription(userId, planId, gymId);
 
     res.status(201).json({
       message: 'Subscription created and payment order generated',
+      // result should contain the payment order details (e.g., order_id) needed by the client
       ...result,
     });
   } catch (error: any) {
@@ -34,7 +38,7 @@ export const getMySubscriptions = async (req: Request, res: Response) => {
       include: {
         gym: true,
         plan: true,
-        payment: true,
+        payment: true, // Includes the payment status for completeness
       },
       orderBy: { createdAt: 'desc' },
     });

@@ -1,15 +1,18 @@
 import { Request, Response } from 'express';
-import { paymentService } from '../services';
+import { subscriptionService } from '../services';
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
+    // These IDs are typically sent by the client after a successful payment callback
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ message: 'Missing required payment details' });
     }
 
-    const subscription = await paymentService.verifyPaymentSignature(
+    // This service call handles payment verification with the gateway and
+    // updates the subscription status to 'active' or 'successful' in the DB.
+    const subscription = await subscriptionService.handlePaymentSuccess(
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature

@@ -4,25 +4,35 @@ import logger from '../lib/logger';
 import { getAuthUser } from '../utils/getAuthUser';
 import { gymService } from '../services'
 import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError } from '../utils/response';
+import { Role } from '@prisma/client';
 
-// Create a new gym
+// --------------------------------------------------------------------------
+// createGym
+// --------------------------------------------------------------------------
 export const createGym: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
-    const { name, address } = req.body;
+    const { name, address, ownerId: explicitOwnerId } = req.body;
+    const user = authReq.user;
 
-    if (!authReq.user?.id) {
+    if (!user?.id) {
       logger.error('User ID not found in request');
       return sendUnauthorized(res);
     }
 
-    const ownerId = authReq.user.id;
+    // 🎯 Use Role.ADMIN
+    const isAdmin = user.roles?.includes(Role.ADMIN);
 
-    // Only OWNER role can create gym (enforced by isOwner middleware in routes)
+    let finalOwnerId = user.id;
+
+    if (isAdmin && explicitOwnerId) {
+      finalOwnerId = explicitOwnerId;
+    }
+
     const gym = await gymService.createGym({
       name,
       address,
-      ownerId,
+      ownerId: finalOwnerId,
     });
 
     logger.info(`Successfully created gym with id: ${gym.id}`);
@@ -33,7 +43,7 @@ export const createGym: RequestHandler = async (req, res) => {
   }
 };
 
-// Get all gyms
+// Get all gyms (No changes needed here)
 export const getAllGyms: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
   logger.info('Fetching all gyms', { userId: user?.id });
@@ -47,7 +57,7 @@ export const getAllGyms: RequestHandler = async (req, res) => {
   }
 };
 
-// Get my gyms (where user is owner)
+// Get my gyms (No changes needed here)
 export const getMyGyms: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
@@ -60,7 +70,6 @@ export const getMyGyms: RequestHandler = async (req, res) => {
     const userId = authReq.user.id;
     logger.info(`Fetching gyms owned by user: ${userId}`);
 
-    // For now, filter all gyms by owner. In future, we can add a dedicated service method
     const allGyms = await gymService.getAllGyms();
     const myGyms = allGyms.filter((gym) => gym.ownerId === userId);
 
@@ -72,7 +81,7 @@ export const getMyGyms: RequestHandler = async (req, res) => {
   }
 };
 
-// Get a single gym by ID
+// Get a single gym by ID (No changes needed here)
 export const getGymById: RequestHandler = async (req, res) => {
   const { id } = req.params;
   logger.info(`Fetching gym with id: ${id}`);
@@ -92,7 +101,9 @@ export const getGymById: RequestHandler = async (req, res) => {
   }
 };
 
-// Update a gym
+// --------------------------------------------------------------------------
+// updateGym
+// --------------------------------------------------------------------------
 export const updateGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
@@ -104,7 +115,10 @@ export const updateGym: RequestHandler = async (req, res) => {
   logger.info(`Updating gym with id: ${id}`, { userId: user.id });
   try {
     const { name, address } = req.body;
-    const ownerId = user.id;
+    const userId = user.id;
+
+    // 🎯 Use Role.ADMIN
+    const isAdmin = user.roles?.includes(Role.ADMIN);
 
     const gym = await gymService.getGymById(id);
 
@@ -113,8 +127,9 @@ export const updateGym: RequestHandler = async (req, res) => {
       return sendNotFound(res, 'Gym not found');
     }
 
-    if (gym.ownerId !== ownerId) {
-      logger.warn(`User ${ownerId} is not authorized to update gym with id: ${id}`);
+    // Authorization Check: Must be the owner OR an Admin
+    if (gym.ownerId !== userId && !isAdmin) {
+      logger.warn(`User ${userId} is not authorized to update gym with id: ${id}`);
       return sendForbidden(res, 'You are not authorized to update this gym');
     }
 
@@ -128,7 +143,9 @@ export const updateGym: RequestHandler = async (req, res) => {
   }
 };
 
-// Delete a gym
+// --------------------------------------------------------------------------
+// deleteGym
+// --------------------------------------------------------------------------
 export const deleteGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
@@ -140,6 +157,9 @@ export const deleteGym: RequestHandler = async (req, res) => {
   logger.info(`Deleting gym with id: ${id}`, { userId: user.id });
   try {
     const ownerId = user.id;
+    // 🎯 Use Role.ADMIN
+    const isAdmin = user.roles?.includes(Role.ADMIN);
+
     const gym = await gymService.getGymById(id);
 
     if (!gym) {
@@ -147,7 +167,8 @@ export const deleteGym: RequestHandler = async (req, res) => {
       return sendNotFound(res, 'Gym not found');
     }
 
-    if (gym.ownerId !== ownerId) {
+    // Authorization Check: Must be the owner OR an Admin
+    if (gym.ownerId !== ownerId && !isAdmin) {
       logger.warn(`User ${ownerId} is not authorized to delete gym with id: ${id}`);
       return sendForbidden(res, 'You are not authorized to delete this gym');
     }
@@ -162,12 +183,15 @@ export const deleteGym: RequestHandler = async (req, res) => {
   }
 };
 
-// Verify a gym (ADMIN only)
+// --------------------------------------------------------------------------
+// verifyGym
+// --------------------------------------------------------------------------
 export const verifyGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
 
-  if (!user?.roles?.includes('ADMIN')) {
+  // 🎯 Use Role.ADMIN
+  if (!user?.roles?.includes(Role.ADMIN)) {
     return sendForbidden(res, 'Only admin can verify gyms');
   }
 
@@ -184,12 +208,15 @@ export const verifyGym: RequestHandler = async (req, res) => {
   }
 };
 
-// Unverify a gym (ADMIN only)
+// --------------------------------------------------------------------------
+// unverifyGym
+// --------------------------------------------------------------------------
 export const unverifyGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
 
-  if (!user?.roles?.includes('ADMIN')) {
+  // 🎯 Use Role.ADMIN
+  if (!user?.roles?.includes(Role.ADMIN)) {
     return sendForbidden(res, 'Only admin can unverify gyms');
   }
 

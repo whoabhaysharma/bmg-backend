@@ -5,6 +5,9 @@ import logger from '../lib/logger';
 import { AuthService } from '../services';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
+// Simple validation regex for 10 digits. This should ideally be moved to a constants/util file.
+const PHONE_NUMBER_REGEX = /^\d{10}$/;
+
 export const sendOtp = async (
   req: Request,
   res: Response
@@ -16,6 +19,12 @@ export const sendOtp = async (
     if (!phoneNumber) {
       return sendBadRequest(res, 'Phone number is required');
     }
+
+    // --- FIX: Add phone number format validation ---
+    if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
+      return sendBadRequest(res, 'Invalid phone number format. Must be 10 digits.');
+    }
+    // ---------------------------------------------
 
     const otp = await AuthService.generateOtp(phoneNumber);
 

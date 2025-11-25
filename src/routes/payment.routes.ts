@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { paymentController } from '../controllers/payment.controller.js';
-import { isAuthenticated } from '../middleware/index.js';
+import { verifyPayment } from '../controllers/payment.controller';
+import { isAuthenticated } from '../middleware';
 
 const router = Router();
 
-router.post('/verify', isAuthenticated, paymentController.verifyPayment);
+router.post('/verify', isAuthenticated, verifyPayment);
 
 export default router;

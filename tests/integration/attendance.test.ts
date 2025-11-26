@@ -113,4 +113,62 @@ describe('Attendance Resource Integration Test', () => {
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.data)).toBe(true);
     });
+
+    it('should return 403 when user tries to check-in without active subscription', async () => {
+        // Create a new user without subscription
+        const userWithoutSub = await prisma.user.create({
+            data: {
+                name: 'User Without Subscription',
+                mobileNumber: '7777777777',
+                roles: [Role.USER],
+            },
+        });
+        const noSubToken = generateTestToken(userWithoutSub.id, [Role.USER]);
+
+        const res = await request(app)
+            .post(`/api/attendance/gym/${gymId}/check-in`)
+            .set('Authorization', `Bearer ${noSubToken}`)
+            .send({});
+
+        expect(res.status).toBe(403);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toContain('active subscription');
+
+        // Cleanup
+        await prisma.user.delete({ where: { id: userWithoutSub.id } });
+    });
+
+    it('should return 404 when trying to check-out with invalid attendance ID', async () => {
+        const invalidAttendanceId = 'invalid-attendance-id-123';
+
+        const res = await request(app)
+            .post(`/api/attendance/${invalidAttendanceId}/check-out`)
+            .set('Authorization', `Bearer ${userToken}`)
+            .send({});
+
+        expect(res.status).toBe(404);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toContain('not found');
+    });
+
+    it('should allow user to check-out after checking in', async () => {
+        // First, check in
+        const checkInRes = await request(app)
+            .post(`/api/attendance/gym/${gymId}/check-in`)
+            .set('Authorization', `Bearer ${userToken}`)
+            .send({});
+
+        expect([200, 201]).toContain(checkInRes.status);
+        const attendanceId = checkInRes.body.data.id;
+
+        // Then, check out
+        const checkOutRes = await request(app)
+            .post(`/api/attendance/${attendanceId}/check-out`)
+            .set('Authorization', `Bearer ${userToken}`)
+            .send({});
+
+        expect(checkOutRes.status).toBe(200);
+        expect(checkOutRes.body.success).toBe(true);
+        expect(checkOutRes.body.data.checkOut).toBeTruthy();
+    });
 });

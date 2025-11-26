@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware';
 import { attendanceService } from '../services';
 import logger from '../lib/logger';
@@ -6,8 +6,7 @@ import logger from '../lib/logger';
 // Get my attendance history
 export const getMyAttendance = async (
   req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   if (!req.user?.id) {
     return res.status(401).json({
@@ -37,15 +36,18 @@ export const getMyAttendance = async (
     });
   } catch (error) {
     logger.error('Error fetching attendance history', { userId: req.user.id, error });
-    next(error);
+    return res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to fetch attendance history',
+    });
   }
 };
 
 // Check in to a gym
 export const checkIn = async (
   req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   if (!req.user?.id) {
     return res.status(401).json({
@@ -72,17 +74,33 @@ export const checkIn = async (
       data: attendance,
       error: null,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error checking in', { userId: req.user.id, gymId, error });
-    next(error);
+
+    // Handle specific error cases
+    const errorMessage = error?.message || 'Failed to check in';
+
+    if (errorMessage.includes('does not have an active subscription')) {
+      return res.status(403).json({
+        success: false,
+        data: null,
+        error: 'You do not have an active subscription for this gym',
+      });
+    }
+
+    // Generic error
+    return res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to check in',
+    });
   }
 };
 
 // Check out from a gym
 export const checkOut = async (
   req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   if (!req.user?.id) {
     return res.status(401).json({
@@ -109,8 +127,25 @@ export const checkOut = async (
       data: updatedAttendance,
       error: null,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error checking out', { userId: req.user.id, attendanceId, error });
-    next(error);
+
+    // Handle specific error cases
+    const errorMessage = error?.message || 'Failed to check out';
+
+    if (errorMessage.includes('Active attendance record not found')) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        error: 'Active attendance record not found or you are not authorized',
+      });
+    }
+
+    // Generic error
+    return res.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to check out',
+    });
   }
 };

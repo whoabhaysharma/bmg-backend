@@ -7,6 +7,7 @@ import subscriptionRoutes from './subscription.routes';
 import paymentRoutes from './payment.routes';
 import attendanceRoutes from './attendance.routes';
 import notificationRoutes from './notification.routes';
+import settlementRoutes from './settlement.routes';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/settlements', settlementRoutes);
 
 export default router;

@@ -1,4 +1,4 @@
-import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType, SubscriptionSource } from '@prisma/client';
+import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType, SubscriptionSource, PaymentMethod } from '@prisma/client';
 import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -369,7 +369,7 @@ export const subscriptionService = {
         subscriptionId: subscription.id,
         amount: plan.price,
         status: PaymentStatus.COMPLETED,
-        method: 'CASH', // or 'CONSOLE'
+        method: PaymentMethod.CONSOLE,
       },
     });
 

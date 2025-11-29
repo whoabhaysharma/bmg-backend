@@ -5,3 +5,4 @@ export * from './payment.service';
 export * from './subscription.service';
 export * from './subscriptionPlan.service';
 export * from './user.service';
+export * from './settlement.service';

@@ -35,6 +35,7 @@ model Gym {
   subscriptionPlans GymSubscriptionPlan[]
   subscriptions     Subscription[]
   attendanceLogs    Attendance[]
+  settlements       Settlement[]
 
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -97,13 +98,16 @@ model Payment {
   subscription      Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   
   amount            Int
-  method            String?
+  method            PaymentMethod?
   status            PaymentStatus @default(PENDING)
 
   razorpayOrderId   String?       @unique   // <-- ADDED
   razorpayPaymentId String?
   razorpaySignature String?
   
+  settlementId      String?
+  settlement        Settlement?   @relation(fields: [settlementId], references: [id])
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }
@@ -151,6 +155,26 @@ model Notification {
   @@index([userId])
 }
 
+model Settlement {
+  id            String           @id @default(cuid())
+  
+  gymId         String
+  gym           Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  
+  amount        Int              // Total amount to be settled
+  status        SettlementStatus @default(PENDING)
+  
+  transactionId String?          // Bank transaction reference or UTR
+  notes         String?
+
+  payments      Payment[]
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([gymId])
+}
+
 enum Role {
   ADMIN
   OWNER
@@ -167,6 +191,12 @@ enum SubscriptionStatus {
 enum PaymentStatus {
   PENDING
   COMPLETED
+  FAILED
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSED
   FAILED
 }
 
@@ -188,4 +218,13 @@ enum NotificationType {
   SUCCESS
   WARNING
   ERROR
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  NET_BANKING
+  CONSOLE // For manual entry via console
+  ONLINE  // General online (Razorpay etc)
 }

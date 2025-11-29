@@ -1,10 +1,12 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 // Ensure env keys exist
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  throw new Error('Missing Razorpay environment variables: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required.');
+  throw new Error(
+    'Missing Razorpay environment variables: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required.'
+  );
 }
 
 const razorpay = new Razorpay({
@@ -18,6 +20,7 @@ export const paymentService = {
     const amountInPaise = Math.round(amount * 100);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const order = await (razorpay as any).orders.create({
         amount: amountInPaise,
         currency,
@@ -32,7 +35,11 @@ export const paymentService = {
   },
 
   // Verify payment signature
-  verifyPaymentSignature(orderId: string, paymentId: string, signature: string) {
+  verifyPaymentSignature(
+    orderId: string,
+    paymentId: string,
+    signature: string
+  ) {
     const payload = `${orderId}|${paymentId}`;
 
     const expected = crypto
@@ -55,9 +62,20 @@ export const paymentService = {
     page?: number;
     limit?: number;
   }) {
-    const { gymId, userId, source, status, settlementStatus, startDate, endDate, page = 1, limit = 10 } = filters;
+    const {
+      gymId,
+      userId,
+      source,
+      status,
+      settlementStatus,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+    } = filters;
     const skip = (page - 1) * limit;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (gymId) where.subscription = { ...where.subscription, gymId };
@@ -65,7 +83,10 @@ export const paymentService = {
 
     if (source) {
       if (source === 'ONLINE') {
-        where.subscription = { ...where.subscription, source: { in: ['APP', 'WHATSAPP'] } };
+        where.subscription = {
+          ...where.subscription,
+          source: { in: ['APP', 'WHATSAPP'] },
+        };
       } else {
         where.subscription = { ...where.subscription, source: 'CONSOLE' };
       }
@@ -91,7 +112,7 @@ export const paymentService = {
       if (endDate) where.createdAt.lte = endDate;
     }
 
-    const prisma = new PrismaClient(); // Instantiate here or top level. Top level is better.
+    // const prisma = new PrismaClient(); // Removed local instantiation
 
     const [payments, total] = await Promise.all([
       prisma.payment.findMany({

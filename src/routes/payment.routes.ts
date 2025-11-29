@@ -13,7 +13,12 @@ import { paymentProcessSchema } from '../types/schemas';
 const router = Router();
 
 // Payment processing
-router.post('/:subscriptionId/process', isAuthenticated, validate(paymentProcessSchema), processPayment);
+router.post(
+  '/:subscriptionId/process',
+  isAuthenticated,
+  validate(paymentProcessSchema),
+  processPayment
+);
 
 // Payment history routes
 router.get('/history', isAuthenticated, getMyPayments);

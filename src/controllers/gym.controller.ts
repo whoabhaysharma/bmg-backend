@@ -14,7 +14,7 @@ export const createGym: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const { name, address } = req.body;
-    
+
     if (!authReq.user?.id) {
       logger.error('User ID not found in request');
       return res.status(401).json({
@@ -23,7 +23,7 @@ export const createGym: RequestHandler = async (req, res) => {
         error: 'User not authenticated',
       });
     }
-    
+
     const ownerId = authReq.user.id;
 
     // Only OWNER role can create gym (enforced by isOwner middleware in routes)
@@ -132,7 +132,7 @@ export const getGymById = async (req: AuthenticatedRequest, res: Response) => {
 export const updateGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
-  
+
   if (!user?.id) {
     return res.status(401).json({
       success: false,
@@ -160,7 +160,9 @@ export const updateGym: RequestHandler = async (req, res) => {
     }
 
     if (gym.ownerId !== ownerId) {
-      logger.warn(`User ${ownerId} is not authorized to update gym with id: ${id}`);
+      logger.warn(
+        `User ${ownerId} is not authorized to update gym with id: ${id}`
+      );
       return res.status(403).json({
         success: false,
         data: null,
@@ -193,7 +195,7 @@ export const updateGym: RequestHandler = async (req, res) => {
 export const deleteGym: RequestHandler = async (req, res) => {
   const { id } = req.params;
   const user = getAuthUser(req);
-  
+
   if (!user?.id) {
     return res.status(401).json({
       success: false,
@@ -219,7 +221,9 @@ export const deleteGym: RequestHandler = async (req, res) => {
     }
 
     if (gym.ownerId !== ownerId) {
-      logger.warn(`User ${ownerId} is not authorized to delete gym with id: ${id}`);
+      logger.warn(
+        `User ${ownerId} is not authorized to delete gym with id: ${id}`
+      );
       return res.status(403).json({
         success: false,
         data: null,

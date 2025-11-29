@@ -46,10 +46,10 @@ export const processPayment = async (
     }
 
     if (subscription.payment?.status === 'COMPLETED') {
-      logger.warn('Payment already completed', { 
-        userId, 
+      logger.warn('Payment already completed', {
+        userId,
         subscriptionId,
-        paymentId: subscription.payment.id 
+        paymentId: subscription.payment.id,
       });
       return res.status(400).json({
         success: false,
@@ -70,10 +70,10 @@ export const processPayment = async (
       },
     });
 
-    logger.info('Successfully processed payment', { 
-      userId, 
+    logger.info('Successfully processed payment', {
+      userId,
       subscriptionId,
-      paymentId: payment.id 
+      paymentId: payment.id,
     });
 
     return res.status(200).json({
@@ -82,7 +82,11 @@ export const processPayment = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error processing payment', { userId: userId, subscriptionId, error });
+    logger.error('Error processing payment', {
+      userId: userId,
+      subscriptionId,
+      error,
+    });
     next(error);
   }
 };
@@ -128,9 +132,9 @@ export const getMyPayments = async (
       },
     });
 
-    logger.info('Successfully fetched payment history', { 
-      userId: req.user.id, 
-      count: payments.length 
+    logger.info('Successfully fetched payment history', {
+      userId: req.user.id,
+      count: payments.length,
     });
 
     return res.status(200).json({
@@ -139,7 +143,10 @@ export const getMyPayments = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error fetching payment history', { userId: req.user.id, error });
+    logger.error('Error fetching payment history', {
+      userId: req.user.id,
+      error,
+    });
     next(error);
   }
 };
@@ -172,11 +179,14 @@ export const getGymPayments = async (
     });
 
     if (!gym) {
-      logger.warn('Unauthorized access to gym payment history', { userId: req.user.id, gymId });
+      logger.warn('Unauthorized access to gym payment history', {
+        userId: req.user.id,
+        gymId,
+      });
       return res.status(403).json({
         success: false,
         data: null,
-        error: 'Not authorized to view this gym\'s payment history',
+        error: "Not authorized to view this gym's payment history",
       });
     }
 
@@ -205,10 +215,10 @@ export const getGymPayments = async (
       },
     });
 
-    logger.info('Successfully fetched gym payment history', { 
-      userId: req.user.id, 
+    logger.info('Successfully fetched gym payment history', {
+      userId: req.user.id,
       gymId,
-      count: payments.length 
+      count: payments.length,
     });
 
     return res.status(200).json({
@@ -217,7 +227,11 @@ export const getGymPayments = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error fetching gym payment history', { userId: req.user.id, gymId, error });
+    logger.error('Error fetching gym payment history', {
+      userId: req.user.id,
+      gymId,
+      error,
+    });
     next(error);
   }
 };

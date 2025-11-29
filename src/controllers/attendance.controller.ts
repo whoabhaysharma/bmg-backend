@@ -51,7 +51,10 @@ export const getMyAttendance = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error fetching attendance history', { userId: req.user.id, error });
+    logger.error('Error fetching attendance history', {
+      userId: req.user.id,
+      error,
+    });
     next(error);
   }
 };
@@ -83,7 +86,10 @@ export const checkIn = async (
     });
 
     if (!activeSubscription) {
-      logger.warn('No active subscription found', { userId: req.user.id, gymId });
+      logger.warn('No active subscription found', {
+        userId: req.user.id,
+        gymId,
+      });
       return res.status(403).json({
         success: false,
         error: 'No active subscription found for this gym',
@@ -138,7 +144,10 @@ export const checkOut = async (
   }
 
   const { attendanceId } = req.params;
-  logger.info('Processing gym check-out', { userId: req.user.id, attendanceId });
+  logger.info('Processing gym check-out', {
+    userId: req.user.id,
+    attendanceId,
+  });
 
   try {
     // Find attendance record
@@ -151,7 +160,10 @@ export const checkOut = async (
     });
 
     if (!attendance) {
-      logger.warn('Active attendance record not found', { userId: req.user.id, attendanceId });
+      logger.warn('Active attendance record not found', {
+        userId: req.user.id,
+        attendanceId,
+      });
       return res.status(404).json({
         success: false,
         error: 'Active attendance record not found',
@@ -179,7 +191,12 @@ export const checkOut = async (
     logger.info('Successfully checked out', {
       userId: req.user.id,
       attendanceId,
-      duration: Math.round((updatedAttendance.checkOut!.getTime() - attendance.checkIn!.getTime()) / 1000 / 60), // Duration in minutes
+      duration: Math.round(
+        (updatedAttendance.checkOut!.getTime() -
+          attendance.checkIn!.getTime()) /
+          1000 /
+          60
+      ), // Duration in minutes
     });
 
     return res.status(200).json({
@@ -188,7 +205,11 @@ export const checkOut = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error checking out', { userId: req.user.id, attendanceId, error });
+    logger.error('Error checking out', {
+      userId: req.user.id,
+      attendanceId,
+      error,
+    });
     next(error);
   }
 };

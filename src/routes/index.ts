@@ -15,7 +15,7 @@ router.use('/auth', authRoutes);
 // Authenticated user routes
 router.use('/users', userRoutes);
 router.use('/gyms', gymRoutes);
-router.use('/plans', planRoutes);
+router.use('/', planRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);

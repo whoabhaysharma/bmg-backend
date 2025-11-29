@@ -22,7 +22,9 @@ export const createPlan = async (
     }
 
     // Verify user owns the gym
-    logger.info(`Verifying gym ownership for userId: ${userId}, gymId: ${gymId}`);
+    logger.info(
+      `Verifying gym ownership for userId: ${userId}, gymId: ${gymId}`
+    );
     const gym = await prisma.gym.findUnique({
       where: { id: gymId },
     });
@@ -175,7 +177,9 @@ export const updatePlan = async (
 
     // Verify user owns the gym
     if (plan.gym.ownerId !== userId) {
-      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId}`);
+      logger.warn(
+        `Unauthorized: User ${userId} does not own gym ${plan.gymId}`
+      );
       return res.status(403).json({
         success: false,
         error: 'You do not own this gym',
@@ -239,7 +243,9 @@ export const deletePlan = async (
 
     // Verify user owns the gym
     if (plan.gym.ownerId !== userId) {
-      logger.warn(`Unauthorized: User ${userId} does not own gym ${plan.gymId}`);
+      logger.warn(
+        `Unauthorized: User ${userId} does not own gym ${plan.gymId}`
+      );
       return res.status(403).json({
         success: false,
         error: 'You do not own this gym',

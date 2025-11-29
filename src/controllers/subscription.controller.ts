@@ -148,7 +148,12 @@ export const subscribe = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error creating subscription', { userId, planId, gymId, error });
+    logger.error('Error creating subscription', {
+      userId,
+      planId,
+      gymId,
+      error,
+    });
     next(error);
   }
 };
@@ -233,7 +238,11 @@ export const cancelSubscription = async (
       error: null,
     });
   } catch (error) {
-    logger.error('Error cancelling subscription', { userId, subscriptionId, error });
+    logger.error('Error cancelling subscription', {
+      userId,
+      subscriptionId,
+      error,
+    });
     next(error);
   }
 };

@@ -1,4 +1,3 @@
-
 import type { RequestHandler } from 'express';
 import { AuthenticatedRequest } from '../middleware/isAuthenticated';
 import prisma from '../lib/prisma';
@@ -47,10 +46,16 @@ export const getMyProfile: RequestHandler = async (req, res) => {
       });
     }
 
-    const roles = dbUser.userRoles.map((userRole: { role: string }) => userRole.role);
+    const roles = dbUser.userRoles.map(
+      (userRole: { role: string }) => userRole.role
+    );
     const userProfile = { ...dbUser, userRoles: roles };
 
-    logger.info({ msg: 'Successfully fetched user profile', userId: user.id, rolesCount: roles.length });
+    logger.info({
+      msg: 'Successfully fetched user profile',
+      userId: user.id,
+      rolesCount: roles.length,
+    });
     return res.status(200).json({
       success: true,
       data: userProfile,
@@ -60,7 +65,10 @@ export const getMyProfile: RequestHandler = async (req, res) => {
     logger.error({
       msg: 'Error fetching user profile',
       userId: user.id,
-      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      error:
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : error,
     });
     return res.status(500).json({
       success: false,
@@ -69,7 +77,6 @@ export const getMyProfile: RequestHandler = async (req, res) => {
     });
   }
 };
-
 
 export const updateMyProfile: RequestHandler = async (req, res) => {
   const user = (req as AuthenticatedRequest).user;
@@ -88,7 +95,11 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
     // Validate roles if provided
     if (roles) {
       if (!Array.isArray(roles) || roles.length === 0) {
-        logger.warn({ msg: 'Invalid roles format', userId: user.id, providedRoles: roles });
+        logger.warn({
+          msg: 'Invalid roles format',
+          userId: user.id,
+          providedRoles: roles,
+        });
         return res.status(400).json({
           success: false,
           data: null,
@@ -97,7 +108,9 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
       }
 
       const validRoles = ['OWNER', 'USER'];
-      const invalidRoles = roles.filter((role: string) => !validRoles.includes(role));
+      const invalidRoles = roles.filter(
+        (role: string) => !validRoles.includes(role)
+      );
 
       if (invalidRoles.length > 0) {
         logger.warn({
@@ -123,10 +136,15 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
       await prisma.userRole.createMany({
         data: roles.map((role: string) => ({
           userId: user.id,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           role: role as any, // Cast to 'any' to bypass type error, or use 'as Role' if Role enum is imported
         })),
       });
-      logger.info({ msg: 'Replaced user roles', userId: user.id, newRoles: roles });
+      logger.info({
+        msg: 'Replaced user roles',
+        userId: user.id,
+        newRoles: roles,
+      });
     }
 
     const updatedUser = await prisma.user.update({
@@ -153,10 +171,16 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
       },
     });
 
-    const rolesList = updatedUser.userRoles.map((userRole: { role: string }) => userRole.role);
+    const rolesList = updatedUser.userRoles.map(
+      (userRole: { role: string }) => userRole.role
+    );
     const userProfile = { ...updatedUser, userRoles: rolesList };
 
-    logger.info({ msg: 'Successfully updated user profile', userId: user.id, rolesCount: rolesList.length });
+    logger.info({
+      msg: 'Successfully updated user profile',
+      userId: user.id,
+      rolesCount: rolesList.length,
+    });
     return res.status(200).json({
       success: true,
       data: userProfile,
@@ -166,7 +190,10 @@ export const updateMyProfile: RequestHandler = async (req, res) => {
     logger.error({
       msg: 'Error updating user profile',
       userId: user.id,
-      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      error:
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : error,
     });
     return res.status(500).json({
       success: false,

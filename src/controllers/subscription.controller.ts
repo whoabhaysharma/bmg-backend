@@ -73,3 +73,44 @@ export const getMySubscriptions = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Failed to fetch subscriptions' });
   }
 };
+
+export const getGymSubscriptions = async (req: Request, res: Response) => {
+  try {
+    const { gymId, page, limit, status } = req.query;
+    const userId = (req as any).user.id;
+    const userRoles = (req as any).user.roles || [];
+
+    if (!gymId) {
+      return res.status(400).json({ message: 'gymId is required' });
+    }
+
+    // Verify ownership or admin status
+    const gym = await prisma.gym.findUnique({
+      where: { id: gymId as string },
+      select: { ownerId: true },
+    });
+
+    if (!gym) {
+      return res.status(404).json({ message: 'Gym not found' });
+    }
+
+    const isAdmin = userRoles.includes('ADMIN');
+    const isOwner = gym.ownerId === userId;
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'You are not authorized to view subscriptions for this gym' });
+    }
+
+    const result = await subscriptionService.getSubscriptionsByGym(
+      gymId as string,
+      Number(page) || 1,
+      Number(limit) || 10,
+      status as any
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Get gym subscriptions error:', error);
+    return res.status(500).json({ message: 'Failed to fetch subscriptions' });
+  }
+};

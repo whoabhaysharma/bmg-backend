@@ -164,4 +164,56 @@ export const subscriptionService = {
       },
     });
   },
+
+  // Get subscriptions by gym ID with pagination and filtering
+  async getSubscriptionsByGym(
+    gymId: string,
+    page: number = 1,
+    limit: number = 10,
+    status?: SubscriptionStatus
+  ) {
+    const skip = (page - 1) * limit;
+    const where: any = { gymId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [subscriptions, total] = await Promise.all([
+      prisma.subscription.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              mobileNumber: true,
+            },
+          },
+          plan: {
+            select: {
+              name: true,
+              price: true,
+              durationValue: true,
+              durationUnit: true,
+            },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.subscription.count({ where }),
+    ]);
+
+    return {
+      data: subscriptions,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
 };

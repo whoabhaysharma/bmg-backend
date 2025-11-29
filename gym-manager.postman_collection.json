@@ -28,10 +28,6 @@
                   "        console.log('No token found in response.');",
                   "    }",
                   "});"
-                  
-                  "if (pm.environment.get('authToken')) {",
-                  "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.environment.get('authToken') });",
-                  "}"
                 ]
               }
             }
@@ -107,9 +103,10 @@
                   "pm.test(\"Update profile successful\", function() {",
                   "    pm.response.to.have.status(200);",
                   "    const jsonData = pm.response.json();",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
-                  "    pm.expect(jsonData.data.mobileNumber).to.equal(pm.request.body.mobileNumber);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
+                  "    pm.expect(jsonData.data.mobileNumber).to.equal(requestBody.mobileNumber);",
                   "});"
                 ]
               }
@@ -156,9 +153,10 @@
                   "pm.test(\"Create gym successful\", function() {",
                   "    pm.response.to.have.status(201);",
                   "    const jsonData = pm.response.json();",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
                   "    pm.expect(jsonData.success).to.be.true;",
                   "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
                   "    pm.environment.set('gymId', jsonData.data.id);",
                   "});"
                 ]
@@ -275,8 +273,9 @@
                   "pm.test(\"Update gym successful\", function() {",
                   "    pm.response.to.have.status(200);",
                   "    const jsonData = pm.response.json();",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data.name).to.equal(pm.request.body.name);",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
                   "});"
                 ]
               }
@@ -347,6 +346,271 @@
                 {
                   "key": "id",
                   "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Plans",
+      "item": [
+        {
+          "name": "Create Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create plan successful\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "    const jsonData = pm.response.json();",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data.name).to.equal(requestBody.name);",
+                  "    pm.environment.set('planId', jsonData.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monthly Plan\",\n  \"description\": \"Basic monthly membership\",\n  \"durationInMonths\": 1,\n  \"price\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gym/:gymId/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gym", ":gymId", "plans"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Plans for Gym",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get plans successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/gym/:gymId/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gym", ":gymId", "plans"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active Plans for Gym",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get active plans successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/gym/:gymId/plans/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gym", ":gymId", "plans", "active"],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Plan By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.id).to.equal(pm.environment.get('planId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Update plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.price).to.equal(1200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 1200,\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Delete plan successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/:planId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", ":planId"],
+              "variable": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
                 }
               ]
             }
@@ -604,6 +868,43 @@
                   "value": "{{gymId}}"
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Webhook",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Webhook handled successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": \"<webhook_payload>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "webhook"]
             }
           }
         }

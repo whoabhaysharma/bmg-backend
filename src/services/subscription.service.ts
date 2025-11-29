@@ -1,4 +1,4 @@
-import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType } from '@prisma/client';
+import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType, SubscriptionSource } from '@prisma/client';
 import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -53,7 +53,7 @@ const updatePaymentStatus = async (
 
 export const subscriptionService = {
   // Create pending subscription + order
-  async createSubscription(userId: string, planId: string, gymId: string) {
+  async createSubscription(userId: string, planId: string, gymId: string, source: SubscriptionSource = SubscriptionSource.APP) {
     const plan = await prisma.gymSubscriptionPlan.findUnique({
       where: { id: planId },
       select: {
@@ -91,6 +91,7 @@ export const subscriptionService = {
         endDate: now,
         status: SubscriptionStatus.PENDING,
         accessCode: generateAccessCode(),
+        source,
       },
     });
 
@@ -258,5 +259,132 @@ export const subscriptionService = {
         totalPages: Math.ceil(total / limit),
       },
     };
+  },
+
+  // Manual Activation (Admin/Owner)
+  async manualActivateSubscription(subscriptionId: string) {
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: subscriptionId },
+      include: {
+        plan: true,
+        user: true,
+        gym: true,
+      },
+    });
+
+    if (!subscription) throw new Error('Subscription not found');
+
+    if (subscription.status === SubscriptionStatus.ACTIVE) {
+      throw new Error('Subscription is already active');
+    }
+
+    const { durationValue, durationUnit } = subscription.plan;
+    const startDate = new Date();
+    const endDate = calculateSubscriptionEndDate(startDate, durationValue, durationUnit);
+
+    // Update subscription
+    const updatedSubscription = await prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: SubscriptionStatus.ACTIVE,
+        startDate,
+        endDate,
+      },
+    });
+
+    // Update pending payment if exists
+    const pendingPayment = await prisma.payment.findFirst({
+      where: {
+        subscriptionId,
+        status: PaymentStatus.PENDING,
+      },
+    });
+
+    if (pendingPayment) {
+      await prisma.payment.update({
+        where: { id: pendingPayment.id },
+        data: {
+          status: PaymentStatus.COMPLETED,
+          // We can add a note field later if needed, for now just mark completed
+        },
+      });
+    }
+
+    // Notifications
+    try {
+      await notificationService.createNotification(
+        subscription.userId,
+        'Subscription Activated',
+        `Your subscription to "${subscription.plan.name}" at "${subscription.gym.name}" has been manually activated.`,
+        NotificationType.SUCCESS
+      );
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    return updatedSubscription;
+  },
+
+  // Create subscription via Console (Owner/Admin) - Auto Active
+  async createConsoleSubscription(userId: string, planId: string, gymId: string) {
+    const plan = await prisma.gymSubscriptionPlan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan) throw new Error('SUBSCRIPTION_PLAN_NOT_FOUND');
+
+    // Check existing active
+    const existing = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        gymId,
+        status: SubscriptionStatus.ACTIVE,
+      },
+    });
+
+    if (existing) {
+      throw new Error('User already has an active subscription');
+    }
+
+    const now = new Date();
+    const endDate = calculateSubscriptionEndDate(now, plan.durationValue, plan.durationUnit);
+
+    // Create Active Subscription
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId,
+        gymId,
+        planId,
+        startDate: now,
+        endDate,
+        status: SubscriptionStatus.ACTIVE,
+        accessCode: generateAccessCode(),
+        source: SubscriptionSource.CONSOLE,
+      },
+    });
+
+    // Create Completed Payment (Cash/Manual)
+    await prisma.payment.create({
+      data: {
+        subscriptionId: subscription.id,
+        amount: plan.price,
+        status: PaymentStatus.COMPLETED,
+        method: 'CASH', // or 'CONSOLE'
+      },
+    });
+
+    // Notification
+    try {
+      await notificationService.createNotification(
+        userId,
+        'Membership Added',
+        `A new membership "${plan.name}" has been added to your account by the gym.`,
+        NotificationType.SUCCESS
+      );
+    } catch (error) {
+      console.error('Failed to send console subscription notification:', error);
+    }
+
+    return subscription;
   },
 };

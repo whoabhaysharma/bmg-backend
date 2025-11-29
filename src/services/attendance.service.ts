@@ -202,6 +202,15 @@ export const attendanceService = {
             name: true,
           },
         },
+        subscription: {
+          include: {
+            plan: {
+              select: {
+                name: true,
+              }
+            }
+          }
+        }
       },
     });
 

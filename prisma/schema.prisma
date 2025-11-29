@@ -63,29 +63,32 @@ model GymSubscriptionPlan {
 }
 
 model Subscription {
-  id           String             @id @default(cuid())
-  userId       String
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gymId        String
-  gym          Gym                @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  planId       String
-  plan         GymSubscriptionPlan @relation(fields: [planId], references: [id])
+  id     String @id @default(cuid())
   
-  startDate    DateTime           @default(now())
-  endDate      DateTime
-  status       SubscriptionStatus @default(ACTIVE)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  accessCode   String             @unique 
-  lastCheckIn  DateTime?          
+  gymId  String
+  gym    Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  
+  planId String
+  plan   GymSubscriptionPlan @relation(fields: [planId], references: [id])
 
-  payment      Payment?
-  
-  // --- ADD THIS LINE ---
-  attendanceLogs Attendance[] 
-  // --------------------
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  status    SubscriptionStatus @default(ACTIVE)
 
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  // --- UPDATED: Now supports WhatsApp booking ---
+  source    SubscriptionSource @default(APP)
+
+  accessCode  String    @unique 
+  lastCheckIn DateTime?
+
+  payment        Payment?
+  attendanceLogs Attendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
@@ -132,6 +135,22 @@ model Attendance {
   @@index([subscriptionId])
 }
 
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  type      NotificationType @default(INFO)
+  
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+}
+
 enum Role {
   ADMIN
   OWNER
@@ -158,20 +177,10 @@ enum PlanType {
   YEAR
 }
 
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  title     String
-  message   String
-  isRead    Boolean          @default(false)
-  type      NotificationType @default(INFO)
-  
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  @@index([userId])
+enum SubscriptionSource {
+  APP       // Bought by User via Mobile/Web App
+  CONSOLE   // Added by Owner manually via Dashboard
+  WHATSAPP  // Booked via WhatsApp Bot/Chat
 }
 
 enum NotificationType {

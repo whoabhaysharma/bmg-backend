@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma';
-import { PlanType } from '@prisma/client';
+import { PlanType, NotificationType } from '@prisma/client';
+import { notificationService } from './notification.service';
 
 export const subscriptionPlanService = {
   // Get all plans (admin)
@@ -54,7 +55,7 @@ export const subscriptionPlanService = {
 
     const unit = data.durationUnit ?? PlanType.MONTH;
 
-    return prisma.gymSubscriptionPlan.create({
+    const plan = await prisma.gymSubscriptionPlan.create({
       data: {
         gymId: data.gymId,
         name: data.name,
@@ -64,7 +65,26 @@ export const subscriptionPlanService = {
         durationUnit: unit,
         isActive: true,
       },
+      include: {
+        gym: {
+          select: { ownerId: true, name: true }
+        }
+      }
     });
+
+    // Notify Owner (Non-blocking)
+    try {
+      await notificationService.createNotification(
+        plan.gym.ownerId,
+        'New Plan Created',
+        `A new plan "${plan.name}" has been created for your gym "${plan.gym.name}".`,
+        NotificationType.SUCCESS
+      );
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    return plan;
   },
 
   // Update plan

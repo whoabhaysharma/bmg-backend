@@ -15,6 +15,7 @@ model User {
   gymsOwned     Gym[]          @relation("GymOwner")
   subscriptions Subscription[]
   attendanceLogs Attendance[]
+  notifications Notification[]
   deletedAt     DateTime?
 
   createdAt     DateTime  @default(now())
@@ -155,4 +156,27 @@ enum PlanType {
   WEEK
   MONTH
   YEAR
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  type      NotificationType @default(INFO)
+  
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
 }

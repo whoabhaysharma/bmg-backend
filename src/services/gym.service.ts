@@ -1,4 +1,6 @@
 import prisma from '../lib/prisma';
+import { SubscriptionStatus, PaymentStatus, NotificationType } from '@prisma/client';
+import { notificationService } from './notification.service';
 
 export interface CreateGymInput {
   name: string;
@@ -14,7 +16,7 @@ export interface UpdateGymInput {
 export const gymService = {
   // Toggle gym verification status
   async setGymVerified(id: string, status: boolean) {
-    return prisma.gym.update({
+    const gym = await prisma.gym.update({
       where: { id },
       data: { verified: status },
       include: {
@@ -28,6 +30,20 @@ export const gymService = {
         subscriptionPlans: true,
       },
     });
+
+    // Notify Owner (Non-blocking)
+    try {
+      await notificationService.createNotification(
+        gym.ownerId,
+        status ? 'Gym Verified' : 'Gym Unverified',
+        `Your gym "${gym.name}" has been ${status ? 'verified' : 'unverified'} by the admin.`,
+        status ? NotificationType.SUCCESS : NotificationType.WARNING
+      );
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    return gym;
   },
 
   // Get all gyms
@@ -62,7 +78,7 @@ export const gymService = {
 
   // Create gym
   async createGym(data: CreateGymInput) {
-    return prisma.gym.create({
+    const gym = await prisma.gym.create({
       data: {
         name: data.name,
         address: data.address,
@@ -77,6 +93,20 @@ export const gymService = {
         },
       },
     });
+
+    // Notify Owner (Non-blocking)
+    try {
+      await notificationService.createNotification(
+        gym.ownerId,
+        'Gym Created',
+        `Your gym "${gym.name}" has been successfully created.`,
+        NotificationType.SUCCESS
+      );
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    return gym;
   },
 
   // Update gym
@@ -111,5 +141,54 @@ export const gymService = {
     return prisma.gym.delete({
       where: { id },
     });
+  },
+
+  // Get gym stats
+  async getGymStats(gymId: string) {
+    const [activeMembers, totalRevenue, recentActivity] = await Promise.all([
+      // 1. Active Members
+      prisma.subscription.count({
+        where: {
+          gymId,
+          status: SubscriptionStatus.ACTIVE,
+        },
+      }),
+
+      // 2. Total Revenue (Sum of completed payments)
+      prisma.payment.aggregate({
+        where: {
+          subscription: {
+            gymId,
+          },
+          status: PaymentStatus.COMPLETED,
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+
+      // 3. Recent Activity (Recent subscriptions)
+      prisma.subscription.findMany({
+        where: { gymId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true } },
+          plan: { select: { name: true, price: true } },
+        },
+      }),
+    ]);
+
+    return {
+      activeMembers,
+      totalRevenue: totalRevenue._sum.amount || 0,
+      recentActivity: recentActivity.map((sub) => ({
+        id: sub.id,
+        title: 'New Subscription',
+        description: `${sub.user.name} subscribed to ${sub.plan.name}`,
+        amount: sub.plan.price,
+        time: sub.createdAt,
+      })),
+    };
   },
 };

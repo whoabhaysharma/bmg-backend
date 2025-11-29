@@ -232,3 +232,36 @@ export const unverifyGym: RequestHandler = async (req, res) => {
     return sendInternalError(res);
   }
 };
+
+// --------------------------------------------------------------------------
+// getGymStats
+// --------------------------------------------------------------------------
+export const getGymStats: RequestHandler = async (req, res) => {
+  const { id } = req.params;
+  const user = getAuthUser(req);
+
+  if (!user?.id) {
+    return sendUnauthorized(res);
+  }
+
+  try {
+    const gym = await gymService.getGymById(id);
+    if (!gym) {
+      return sendNotFound(res, 'Gym not found');
+    }
+
+    // Authorization: Owner or Admin
+    const isOwner = gym.ownerId === user.id;
+    const isAdmin = user.roles?.includes(Role.ADMIN);
+
+    if (!isOwner && !isAdmin) {
+      return sendForbidden(res, 'You are not authorized to view stats for this gym');
+    }
+
+    const stats = await gymService.getGymStats(id);
+    return sendSuccess(res, stats);
+  } catch (error) {
+    logger.error(`Error fetching stats for gym ${id}: ${error}`);
+    return sendInternalError(res);
+  }
+};

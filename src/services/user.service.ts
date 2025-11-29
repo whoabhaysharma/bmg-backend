@@ -1,10 +1,26 @@
 import { User, Prisma, Role } from '@prisma/client';
 import prisma from '../lib/prisma';
+import { notificationService } from './notification.service';
+import { NotificationType } from '@prisma/client';
 
 export const userService = {
   // Create user
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    return prisma.user.create({ data });
+    const user = await prisma.user.create({ data });
+
+    // --- Notification: Welcome ---
+    try {
+      await notificationService.createNotification(
+        user.id,
+        'Welcome to Gym Manager!',
+        `Hello ${user.name}, your account has been successfully created.`,
+        NotificationType.SUCCESS
+      );
+    } catch (error) {
+      console.error('Failed to send welcome notification:', error);
+    }
+
+    return user;
   },
 
   // Get user by id (ignores soft-deleted)
@@ -52,10 +68,24 @@ export const userService = {
 
   // Update user
   async updateUser(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-    return prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id },
       data,
     });
+
+    // --- Notification: Profile Updated ---
+    try {
+      await notificationService.createNotification(
+        id,
+        'Profile Updated',
+        'Your profile details have been updated successfully.',
+        NotificationType.INFO
+      );
+    } catch (error) {
+      console.error('Failed to send profile update notification:', error);
+    }
+
+    return updatedUser;
   },
 
   // Soft delete

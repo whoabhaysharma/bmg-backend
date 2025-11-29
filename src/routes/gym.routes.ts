@@ -8,6 +8,7 @@ import {
   deleteGym,
   verifyGym,
   unverifyGym,
+  getGymStats,
 } from '../controllers';
 import { isAuthenticated } from '../middleware';
 import { authorize } from '../middleware/authorize';
@@ -28,5 +29,6 @@ router.patch('/:id/unverify', isAuthenticated, authorize([Role.ADMIN]), unverify
 router.get('/me/owned', isAuthenticated, getMyGyms);
 router.get('/', isAuthenticated, getAllGyms);
 router.get('/:id', isAuthenticated, getGymById);
+router.get('/:id/stats', isAuthenticated, getGymStats);
 
 export default router;

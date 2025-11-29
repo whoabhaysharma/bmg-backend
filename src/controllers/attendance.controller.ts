@@ -149,3 +149,74 @@ export const checkOut = async (
     });
   }
 };
+
+// Verify Check-in (Owner/Admin)
+export const verifyCheckIn = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  if (!req.user?.id) {
+    return res.status(401).json({
+      success: false,
+      error: 'Not authenticated',
+    });
+  }
+
+  const { gymId } = req.params;
+  const { accessCode } = req.body;
+
+  if (!accessCode) {
+    return res.status(400).json({
+      success: false,
+      error: 'Access code is required',
+    });
+  }
+
+  logger.info('Verifying check-in', { userId: req.user.id, gymId, accessCode });
+
+  try {
+    const attendance = await attendanceService.verifyAndCheckIn(accessCode, gymId);
+
+    logger.info('Successfully verified and checked in', {
+      userId: attendance.userId,
+      gymId,
+      attendanceId: attendance.id,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: attendance,
+      error: null,
+    });
+  } catch (error: any) {
+    logger.error('Error verifying check-in', { userId: req.user.id, gymId, error });
+
+    const errorMessage = error?.message || 'Failed to verify check-in';
+
+    if (errorMessage === 'Invalid access code') {
+      return res.status(404).json({
+        success: false,
+        error: 'Invalid access code',
+      });
+    }
+
+    if (errorMessage === 'This access code is not for this gym') {
+      return res.status(403).json({
+        success: false,
+        error: 'This access code is not valid for this gym',
+      });
+    }
+
+    if (errorMessage === 'Subscription is not active' || errorMessage === 'Subscription has expired') {
+      return res.status(403).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to verify check-in',
+    });
+  }
+};

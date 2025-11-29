@@ -1,5 +1,6 @@
-import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment } from '@prisma/client';
+import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType } from '@prisma/client';
 import { paymentService } from './payment.service';
+import { notificationService } from './notification.service';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
@@ -58,6 +59,7 @@ export const subscriptionService = {
       select: {
         id: true,
         price: true,
+        name: true,
         durationValue: true,
         durationUnit: true,
       },
@@ -111,6 +113,18 @@ export const subscriptionService = {
       },
     });
 
+    // --- Notification: Payment Pending ---
+    try {
+      await notificationService.createNotification(
+        userId,
+        'Payment Initiated',
+        `Please complete your payment of ${plan.price} for "${plan.name}".`,
+        NotificationType.INFO
+      );
+    } catch (error) {
+      console.error('Failed to send payment pending notification:', error);
+    }
+
     return { subscription, order };
   },
 
@@ -126,6 +140,12 @@ export const subscriptionService = {
         subscription: {
           include: {
             plan: true,
+            user: true,
+            gym: {
+              include: {
+                owner: true
+              }
+            }
           },
         },
       },
@@ -155,7 +175,7 @@ export const subscriptionService = {
     const endDate = calculateSubscriptionEndDate(startDate, durationValue, durationUnit);
 
     // Activate subscription
-    return prisma.subscription.update({
+    const updatedSubscription = await prisma.subscription.update({
       where: { id: payment.subscription.id },
       data: {
         status: SubscriptionStatus.ACTIVE,
@@ -163,6 +183,29 @@ export const subscriptionService = {
         endDate,
       },
     });
+
+    // --- Notifications (Non-blocking) ---
+    try {
+      // 1. Notify User (Subscriber)
+      await notificationService.createNotification(
+        payment.subscription.userId,
+        'Subscription Activated',
+        `Your subscription to "${payment.subscription.plan.name}" at "${payment.subscription.gym.name}" is now active.`,
+        NotificationType.SUCCESS
+      );
+
+      // 2. Notify Gym Owner
+      await notificationService.createNotification(
+        payment.subscription.gym.ownerId,
+        'New Subscription',
+        `${payment.subscription.user.name} has subscribed to "${payment.subscription.plan.name}".`,
+        NotificationType.INFO
+      );
+    } catch (error) {
+      console.error('Failed to send notifications:', error);
+    }
+
+    return updatedSubscription;
   },
 
   // Get subscriptions by gym ID with pagination and filtering

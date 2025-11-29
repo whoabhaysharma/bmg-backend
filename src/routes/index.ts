@@ -6,6 +6,7 @@ import planRoutes from './plan.routes';
 import subscriptionRoutes from './subscription.routes';
 import paymentRoutes from './payment.routes';
 import attendanceRoutes from './attendance.routes';
+import notificationRoutes from './notification.routes';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/plans', planRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

@@ -9,6 +9,7 @@ import {
     restoreUser,
     addRole,
     getProfile,
+    upgradeToOwner,
 } from '../controllers';
 import { isAuthenticated, isAdmin } from '../middleware';
 
@@ -17,6 +18,7 @@ const router = Router();
 // User profile routes (me)
 router.get('/me/profile', isAuthenticated, getMyProfile);
 router.put('/me/profile', isAuthenticated, updateMyProfile);
+router.post('/me/upgrade-to-owner', isAuthenticated, upgradeToOwner);
 
 // Admin routes
 router.get('/', isAuthenticated, isAdmin, getAllUsers); // Get all users

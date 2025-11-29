@@ -234,3 +234,23 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     return sendInternalError(res, 'Failed to fetch profile');
   }
 };
+/**
+ * Upgrade current user to OWNER
+ * Auth: Authenticated User
+ */
+export const upgradeToOwner = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = getAuthUser(req);
+    if (!user) return sendUnauthorized(res);
+
+    // Check if already owner
+    if (user.roles.includes(Role.OWNER)) {
+      return sendBadRequest(res, 'User is already an owner');
+    }
+
+    const updatedUser = await userService.addRole(user.id, Role.OWNER);
+    return sendSuccess(res, updatedUser);
+  } catch (error) {
+    return sendInternalError(res, 'Failed to upgrade to owner');
+  }
+};

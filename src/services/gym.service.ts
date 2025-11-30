@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
-import { SubscriptionStatus, PaymentStatus, NotificationType } from '@prisma/client';
+import { SubscriptionStatus, PaymentStatus } from '@prisma/client';
 import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 
 export interface CreateGymInput {
   name: string;
@@ -31,17 +32,12 @@ export const gymService = {
       },
     });
 
-    // Notify Owner (Non-blocking)
-    try {
-      await notificationService.createNotification(
-        gym.ownerId,
-        status ? 'Gym Verified' : 'Gym Unverified',
-        `Your gym "${gym.name}" has been ${status ? 'verified' : 'unverified'} by the admin.`,
-        status ? NotificationType.SUCCESS : NotificationType.WARNING
-      );
-    } catch (error) {
-      console.error('Failed to send notification:', error);
-    }
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      gym.ownerId,
+      status ? NotificationEvent.GYM_VERIFIED : NotificationEvent.GYM_UNVERIFIED,
+      { gymName: gym.name }
+    );
 
     return gym;
   },
@@ -94,24 +90,19 @@ export const gymService = {
       },
     });
 
-    // Notify Owner (Non-blocking)
-    try {
-      await notificationService.createNotification(
-        gym.ownerId,
-        'Gym Created',
-        `Your gym "${gym.name}" has been successfully created.`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send notification:', error);
-    }
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      gym.ownerId,
+      NotificationEvent.GYM_CREATED,
+      { gymName: gym.name }
+    );
 
     return gym;
   },
 
   // Update gym
   async updateGym(id: string, data: UpdateGymInput) {
-    return prisma.gym.update({
+    const gym = await prisma.gym.update({
       where: { id },
       data: {
         name: data.name,
@@ -123,6 +114,15 @@ export const gymService = {
         },
       },
     });
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      gym.ownerId,
+      NotificationEvent.GYM_UPDATED,
+      { gymName: gym.name }
+    );
+
+    return gym;
   },
 
   // Gyms by owner
@@ -138,9 +138,32 @@ export const gymService = {
 
   // Delete gym
   async deleteGym(id: string) {
-    return prisma.gym.delete({
+    // Get gym details before deletion for notification
+    const gym = await prisma.gym.findUnique({
+      where: { id },
+      include: {
+        owner: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!gym) {
+      throw new Error('Gym not found');
+    }
+
+    const deleted = await prisma.gym.delete({
       where: { id },
     });
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      gym.ownerId,
+      NotificationEvent.GYM_DELETED,
+      { gymName: gym.name }
+    );
+
+    return deleted;
   },
 
   // Get gym stats
@@ -192,3 +215,4 @@ export const gymService = {
     };
   },
 };
+

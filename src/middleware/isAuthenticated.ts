@@ -10,8 +10,40 @@ export interface AuthenticatedRequest extends Request {
   user?: User;
 }
 
+interface CachedUser {
+  user: User;
+  cachedAt: number; // Timestamp when cached
+}
+
 const CACHE_TTL = 900;
 const cache = new NodeCache({ stdTTL: CACHE_TTL });
+
+/**
+ * Invalidate user cache when permissions/roles change
+ * Call this function after updating user roles or permissions
+ */
+export const invalidateUserCache = (userId: string): void => {
+  const cacheKey = `user:${userId}`;
+  try {
+    cache.del(cacheKey);
+    logger.info(`Cache invalidated for user: ${userId}`);
+  } catch (error) {
+    logger.warn('Error invalidating user cache:', { userId, error });
+  }
+};
+
+/**
+ * Invalidate all user caches
+ * Use sparingly - only when necessary (e.g., system-wide permission changes)
+ */
+export const invalidateAllUserCaches = (): void => {
+  try {
+    cache.flushAll();
+    logger.info('All user caches invalidated');
+  } catch (error) {
+    logger.warn('Error invalidating all user caches:', { error });
+  }
+};
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const authReq = req as AuthenticatedRequest;
@@ -34,17 +66,41 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       };
 
       const cacheKey = `user:${decoded.userId}`;
-      let user: User | undefined | null = null;
+      let user: User | null = null;
+      let cachedData: CachedUser | undefined;
+      let needsRefresh = false;
 
       try {
-        user = cache.get<User>(cacheKey);
+        cachedData = cache.get<CachedUser>(cacheKey);
       } catch (cacheError) {
         logger.warn('NodeCache error in isAuthenticated:', { error: cacheError });
       }
 
-      if (!user) {
+      if (cachedData) {
+        // Check if cached user data is stale by comparing updatedAt timestamp
+        const cachedUser = cachedData.user;
+        const cachedTime = new Date(cachedData.cachedAt);
+        const userUpdatedAt = new Date(cachedUser.updatedAt);
+
+        // If user was updated after being cached, we need fresh data
+        if (userUpdatedAt > cachedTime) {
+          needsRefresh = true;
+          logger.info(`User ${decoded.userId} data is stale, refreshing cache`);
+        } else {
+          user = cachedUser;
+        }
+      }
+
+      // Fetch from database if not cached or stale
+      if (!cachedData || needsRefresh) {
         user = await userService.getUserById(decoded.userId);
-        if (user) cache.set(cacheKey, user);
+        if (user) {
+          const newCachedData: CachedUser = {
+            user,
+            cachedAt: Date.now()
+          };
+          cache.set(cacheKey, newCachedData);
+        }
       }
 
       // --- TEST EXPECTATION: Must return { message: "Unauthorized" } ---

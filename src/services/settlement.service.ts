@@ -1,4 +1,6 @@
 import { PrismaClient, SettlementStatus, PaymentStatus, SubscriptionSource } from '@prisma/client';
+import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 
 const prisma = new PrismaClient();
 
@@ -54,6 +56,14 @@ export const settlementService = {
                     amount: totalAmount,
                     status: SettlementStatus.PENDING,
                 },
+                include: {
+                    gym: {
+                        select: {
+                            name: true,
+                            ownerId: true,
+                        },
+                    },
+                },
             });
 
             // 4. Link payments to settlement
@@ -65,6 +75,16 @@ export const settlementService = {
                     settlementId: settlement.id,
                 },
             });
+
+            // ✅ Event-based notification - Settlement Created
+            await notificationService.notifyUser(
+                settlement.gym.ownerId,
+                NotificationEvent.SETTLEMENT_CREATED,
+                {
+                    amount: settlement.amount,
+                    gymName: settlement.gym.name
+                }
+            );
 
             return settlement;
         });
@@ -108,13 +128,35 @@ export const settlementService = {
 
     // Process Settlement (Mark as Paid)
     async processSettlement(id: string, transactionId: string, notes?: string) {
-        return prisma.settlement.update({
+        const settlement = await prisma.settlement.update({
             where: { id },
             data: {
                 status: SettlementStatus.PROCESSED,
                 transactionId,
                 notes,
             },
+            include: {
+                gym: {
+                    select: {
+                        name: true,
+                        ownerId: true,
+                    },
+                },
+            },
         });
+
+        // ✅ Event-based notification - Settlement Processed
+        await notificationService.notifyUser(
+            settlement.gym.ownerId,
+            NotificationEvent.SETTLEMENT_PROCESSED,
+            {
+                amount: settlement.amount,
+                gymName: settlement.gym.name,
+                transactionId: settlement.transactionId || undefined
+            }
+        );
+
+        return settlement;
     },
 };
+

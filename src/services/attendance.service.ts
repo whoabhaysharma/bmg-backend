@@ -1,7 +1,20 @@
-import { PrismaClient, NotificationType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 
 const prisma = new PrismaClient();
+
+// Helper function to calculate duration
+function calculateDuration(checkIn: Date, checkOut: Date): string {
+  const diffMs = checkOut.getTime() - checkIn.getTime();
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 0) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  }
+  return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+}
 
 export const attendanceService = {
   async getAllAttendanceLogs() {
@@ -78,17 +91,15 @@ export const attendanceService = {
       },
     });
 
-    // --- Notification: Check In ---
-    try {
-      await notificationService.createNotification(
-        userId,
-        'Checked In',
-        `You have successfully checked in at "${attendance.gym.name}".`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send check-in notification:', error);
-    }
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.CHECKIN_SUCCESS,
+      {
+        gymName: attendance.gym.name,
+        time: attendance.checkIn
+      }
+    );
 
     return attendance;
   },
@@ -106,12 +117,13 @@ export const attendanceService = {
       throw new Error('Active attendance record not found');
     }
 
+    const checkOutTime = new Date();
     const updatedAttendance = await prisma.attendance.update({
       where: {
         id: attendanceId,
       },
       data: {
-        checkOut: new Date(),
+        checkOut: checkOutTime,
       },
       include: {
         gym: {
@@ -123,17 +135,15 @@ export const attendanceService = {
       },
     });
 
-    // --- Notification: Check Out ---
-    try {
-      await notificationService.createNotification(
-        userId,
-        'Checked Out',
-        `You have successfully checked out from "${updatedAttendance.gym.name}".`,
-        NotificationType.INFO
-      );
-    } catch (error) {
-      console.error('Failed to send check-out notification:', error);
-    }
+    // ✅ Event-based notification with duration
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.CHECKOUT_SUCCESS,
+      {
+        gymName: updatedAttendance.gym.name,
+        duration: calculateDuration(attendance.checkIn, checkOutTime)
+      }
+    );
 
     return updatedAttendance;
   },
@@ -214,17 +224,15 @@ export const attendanceService = {
       },
     });
 
-    // --- Notification: Check In ---
-    try {
-      await notificationService.createNotification(
-        subscription.userId,
-        'Checked In',
-        `You have successfully checked in at "${attendance.gym.name}".`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send check-in notification:', error);
-    }
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      subscription.userId,
+      NotificationEvent.CHECKIN_SUCCESS,
+      {
+        gymName: attendance.gym.name,
+        time: attendance.checkIn
+      }
+    );
 
     return attendance;
   },

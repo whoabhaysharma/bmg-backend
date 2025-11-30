@@ -1,6 +1,8 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import prisma from '../lib/prisma';
+import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 
 // Ensure env keys exist
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -48,6 +50,40 @@ export const paymentService = {
       .digest('hex');
 
     return expected === signature;
+  },
+
+  // Handle payment failure
+  async handlePaymentFailure(razorpayOrderId: string, reason?: string) {
+    const payment = await prisma.payment.findFirst({
+      where: { razorpayOrderId },
+      include: {
+        subscription: {
+          include: {
+            plan: true,
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!payment) return;
+
+    // Update payment status to failed
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: 'FAILED' },
+    });
+
+    // ✅ Event-based notification - Payment Failed
+    await notificationService.notifyUser(
+      payment.subscription.userId,
+      NotificationEvent.PAYMENT_FAILED,
+      {
+        amount: payment.amount,
+        planName: payment.subscription.plan.name,
+        reason: reason || 'Payment verification failed'
+      }
+    );
   },
 
   // Get All Payments (Admin/Owner view)
@@ -145,3 +181,4 @@ export const paymentService = {
     };
   },
 };
+

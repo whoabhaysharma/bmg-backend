@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
-import { PlanType, NotificationType } from '@prisma/client';
+import { PlanType } from '@prisma/client';
 import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 
 export const subscriptionPlanService = {
   // Get all plans (admin)
@@ -72,17 +73,16 @@ export const subscriptionPlanService = {
       }
     });
 
-    // Notify Owner (Non-blocking)
-    try {
-      await notificationService.createNotification(
-        plan.gym.ownerId,
-        'New Plan Created',
-        `A new plan "${plan.name}" has been created for your gym "${plan.gym.name}".`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send notification:', error);
-    }
+    // ✅ New event-based notification
+    await notificationService.notifyUser(
+      plan.gym.ownerId,
+      NotificationEvent.PLAN_CREATED,
+      {
+        planName: plan.name,
+        gymName: plan.gym.name,
+        price: plan.price
+      }
+    );
 
     return plan;
   },
@@ -99,16 +99,72 @@ export const subscriptionPlanService = {
       durationUnit: PlanType;
     }>
   ) {
-    return prisma.gymSubscriptionPlan.update({
+    const plan = await prisma.gymSubscriptionPlan.update({
       where: { id },
       data,
+      include: {
+        gym: {
+          select: { ownerId: true, name: true }
+        }
+      }
     });
+
+    // ✅ Notify owner about plan update
+    await notificationService.notifyUser(
+      plan.gym.ownerId,
+      NotificationEvent.PLAN_UPDATED,
+      {
+        planName: plan.name,
+        gymName: plan.gym.name
+      }
+    );
+
+    // ✅ Notify about activation/deactivation if status changed
+    if (data.isActive !== undefined) {
+      await notificationService.notifyUser(
+        plan.gym.ownerId,
+        data.isActive ? NotificationEvent.PLAN_ACTIVATED : NotificationEvent.PLAN_DEACTIVATED,
+        {
+          planName: plan.name,
+          gymName: plan.gym.name
+        }
+      );
+    }
+
+    return plan;
   },
 
   // Delete plan
   async deletePlan(id: string) {
-    return prisma.gymSubscriptionPlan.delete({
+    // Get plan details before deletion for notification
+    const plan = await prisma.gymSubscriptionPlan.findUnique({
+      where: { id },
+      include: {
+        gym: {
+          select: { ownerId: true, name: true }
+        }
+      }
+    });
+
+    if (!plan) {
+      throw new Error('Plan not found');
+    }
+
+    const deleted = await prisma.gymSubscriptionPlan.delete({
       where: { id },
     });
+
+    // ✅ Notify owner about plan deletion
+    await notificationService.notifyUser(
+      plan.gym.ownerId,
+      NotificationEvent.PLAN_DELETED,
+      {
+        planName: plan.name,
+        gymName: plan.gym.name
+      }
+    );
+
+    return deleted;
   },
 };
+

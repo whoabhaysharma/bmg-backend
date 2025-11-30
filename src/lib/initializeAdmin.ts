@@ -28,6 +28,11 @@ export const initializeAdmin = async () => {
             },
           },
         });
+
+        // Invalidate cache to ensure admin role is reflected immediately
+        const { invalidateUserCache } = await import('../middleware/isAuthenticated');
+        invalidateUserCache(existingAdmin.id);
+
         console.log(`✓ Added ADMIN role to existing user with phone: ${adminPhoneNumber}`);
       } else {
         console.log(`✓ Admin user already exists with phone: ${adminPhoneNumber}`);

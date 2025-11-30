@@ -1,24 +1,20 @@
 import { User, Prisma, Role } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { notificationService } from './notification.service';
-import { NotificationType } from '@prisma/client';
+import { invalidateUserCache } from '../middleware/isAuthenticated';
+import { NotificationEvent } from '../types/notification-events';
 
 export const userService = {
   // Create user
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     const user = await prisma.user.create({ data });
 
-    // --- Notification: Welcome ---
-    try {
-      await notificationService.createNotification(
-        user.id,
-        'Welcome to Gym Manager!',
-        `Hello ${user.name}, your account has been successfully created.`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send welcome notification:', error);
-    }
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      user.id,
+      NotificationEvent.USER_CREATED,
+      { userName: user.name }
+    );
 
     return user;
   },
@@ -73,35 +69,60 @@ export const userService = {
       data,
     });
 
-    // --- Notification: Profile Updated ---
-    try {
-      await notificationService.createNotification(
-        id,
-        'Profile Updated',
-        'Your profile details have been updated successfully.',
-        NotificationType.INFO
-      );
-    } catch (error) {
-      console.error('Failed to send profile update notification:', error);
-    }
+    // Invalidate cache to ensure fresh data on next auth
+    invalidateUserCache(id);
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      id,
+      NotificationEvent.USER_UPDATED,
+      { userName: updatedUser.name }
+    );
 
     return updatedUser;
   },
 
   // Soft delete
   async deleteUser(id: string): Promise<User> {
-    return prisma.user.update({
+    const user = await this.getUserById(id);
+    if (!user) throw new Error('User not found');
+
+    const deletedUser = await prisma.user.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    // Invalidate cache to ensure user cannot authenticate
+    invalidateUserCache(id);
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      id,
+      NotificationEvent.USER_DELETED,
+      { userName: user.name }
+    );
+
+    return deletedUser;
   },
 
   // Restore soft-deleted
   async restoreUser(id: string): Promise<User> {
-    return prisma.user.update({
+    const restoredUser = await prisma.user.update({
       where: { id },
       data: { deletedAt: null },
     });
+
+    // Invalidate cache to allow user to authenticate again
+    invalidateUserCache(id);
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      id,
+      NotificationEvent.USER_RESTORED,
+      { userName: restoredUser.name }
+    );
+
+    return restoredUser;
   },
 
   // Add role
@@ -111,12 +132,24 @@ export const userService = {
 
     if (user.roles.includes(role)) return user;
 
-    return prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         roles: { push: role },
       },
     });
+
+    // Invalidate cache to ensure new role is reflected immediately
+    invalidateUserCache(userId);
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.USER_ROLE_ADDED,
+      { userName: user.name, role }
+    );
+
+    return updatedUser;
   },
 
   // Remove role
@@ -126,7 +159,7 @@ export const userService = {
 
     if (!user.roles.includes(role)) throw new Error('Role not assigned to user');
 
-    return prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         roles: {
@@ -134,6 +167,18 @@ export const userService = {
         },
       },
     });
+
+    // Invalidate cache to ensure role removal is reflected immediately
+    invalidateUserCache(userId);
+
+    // ✅ Event-based notification
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.USER_ROLE_REMOVED,
+      { userName: user.name, role }
+    );
+
+    return updatedUser;
   },
 
   // User profile with relations
@@ -189,3 +234,4 @@ export const userService = {
     };
   },
 };
+

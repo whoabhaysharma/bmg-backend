@@ -1,6 +1,7 @@
-import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, NotificationType, SubscriptionSource, PaymentMethod } from '@prisma/client';
+import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, SubscriptionSource, PaymentMethod } from '@prisma/client';
 import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
+import { NotificationEvent } from '../types/notification-events';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
@@ -67,6 +68,14 @@ export const subscriptionService = {
 
     if (!plan) throw new Error('SUBSCRIPTION_PLAN_NOT_FOUND');
 
+    // Get gym details for notification
+    const gym = await prisma.gym.findUnique({
+      where: { id: gymId },
+      select: { name: true },
+    });
+
+    if (!gym) throw new Error('GYM_NOT_FOUND');
+
     // --- Check existing active subscription (tests expect EXACT wording) ---
     const existing = await prisma.subscription.findFirst({
       where: {
@@ -81,6 +90,7 @@ export const subscriptionService = {
     }
 
     const now = new Date();
+    const endDate = calculateSubscriptionEndDate(now, plan.durationValue, plan.durationUnit);
 
     const subscription = await prisma.subscription.create({
       data: {
@@ -88,7 +98,7 @@ export const subscriptionService = {
         gymId,
         planId,
         startDate: now,
-        endDate: now,
+        endDate: endDate,
         status: SubscriptionStatus.PENDING,
         accessCode: generateAccessCode(),
         source,
@@ -100,7 +110,7 @@ export const subscriptionService = {
     try {
       order = await paymentService.createOrder(plan.price, subscription.id);
     } catch (err) {
-      // match test’s expected error mapping
+      // match test's expected error mapping
       throw new Error('PAYMENT_SERVICE_ERROR');
     }
 
@@ -114,17 +124,26 @@ export const subscriptionService = {
       },
     });
 
-    // --- Notification: Payment Pending ---
-    try {
-      await notificationService.createNotification(
-        userId,
-        'Payment Initiated',
-        `Please complete your payment of ${plan.price} for "${plan.name}".`,
-        NotificationType.INFO
-      );
-    } catch (error) {
-      console.error('Failed to send payment pending notification:', error);
-    }
+    // ✅ Event-based notification - Subscription Created
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.SUBSCRIPTION_CREATED,
+      {
+        planName: plan.name,
+        gymName: gym.name,
+        endDate: endDate
+      }
+    );
+
+    // ✅ Event-based notification - Payment Initiated
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.PAYMENT_INITIATED,
+      {
+        amount: plan.price,
+        planName: plan.name
+      }
+    );
 
     return { subscription, order };
   },
@@ -185,26 +204,44 @@ export const subscriptionService = {
       },
     });
 
-    // --- Notifications (Non-blocking) ---
-    try {
-      // 1. Notify User (Subscriber)
-      await notificationService.createNotification(
-        payment.subscription.userId,
-        'Subscription Activated',
-        `Your subscription to "${payment.subscription.plan.name}" at "${payment.subscription.gym.name}" is now active.`,
-        NotificationType.SUCCESS
-      );
+    // Get updated subscription with access code
+    const fullSubscription = await prisma.subscription.findUnique({
+      where: { id: updatedSubscription.id },
+      select: { accessCode: true },
+    });
 
-      // 2. Notify Gym Owner
-      await notificationService.createNotification(
-        payment.subscription.gym.ownerId,
-        'New Subscription',
-        `${payment.subscription.user.name} has subscribed to "${payment.subscription.plan.name}".`,
-        NotificationType.INFO
-      );
-    } catch (error) {
-      console.error('Failed to send notifications:', error);
-    }
+    // ✅ Event-based notification - Payment Completed
+    await notificationService.notifyUser(
+      payment.subscription.userId,
+      NotificationEvent.PAYMENT_COMPLETED,
+      {
+        amount: payment.amount,
+        planName: payment.subscription.plan.name,
+        transactionId: razorpayPaymentId
+      }
+    );
+
+    // ✅ Event-based notification - Subscription Activated (User)
+    await notificationService.notifyUser(
+      payment.subscription.userId,
+      NotificationEvent.SUBSCRIPTION_ACTIVATED,
+      {
+        planName: payment.subscription.plan.name,
+        gymName: payment.subscription.gym.name,
+        accessCode: fullSubscription?.accessCode || ''
+      }
+    );
+
+    // ✅ Event-based notification - New Subscription (Gym Owner)
+    await notificationService.notifyUser(
+      payment.subscription.gym.ownerId,
+      NotificationEvent.SUBSCRIPTION_CREATED,
+      {
+        planName: payment.subscription.plan.name,
+        gymName: payment.subscription.gym.name,
+        endDate: endDate
+      }
+    );
 
     return updatedSubscription;
   },
@@ -310,17 +347,16 @@ export const subscriptionService = {
       });
     }
 
-    // Notifications
-    try {
-      await notificationService.createNotification(
-        subscription.userId,
-        'Subscription Activated',
-        `Your subscription to "${subscription.plan.name}" at "${subscription.gym.name}" has been manually activated.`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send notification:', error);
-    }
+    // ✅ Event-based notification - Subscription Activated
+    await notificationService.notifyUser(
+      subscription.userId,
+      NotificationEvent.SUBSCRIPTION_ACTIVATED,
+      {
+        planName: subscription.plan.name,
+        gymName: subscription.gym.name,
+        accessCode: subscription.accessCode
+      }
+    );
 
     return updatedSubscription;
   },
@@ -332,6 +368,13 @@ export const subscriptionService = {
     });
 
     if (!plan) throw new Error('SUBSCRIPTION_PLAN_NOT_FOUND');
+
+    const gym = await prisma.gym.findUnique({
+      where: { id: gymId },
+      select: { name: true },
+    });
+
+    if (!gym) throw new Error('GYM_NOT_FOUND');
 
     // Check existing active
     const existing = await prisma.subscription.findFirst({
@@ -373,18 +416,18 @@ export const subscriptionService = {
       },
     });
 
-    // Notification
-    try {
-      await notificationService.createNotification(
-        userId,
-        'Membership Added',
-        `A new membership "${plan.name}" has been added to your account by the gym.`,
-        NotificationType.SUCCESS
-      );
-    } catch (error) {
-      console.error('Failed to send console subscription notification:', error);
-    }
+    // ✅ Event-based notification - Subscription Activated
+    await notificationService.notifyUser(
+      userId,
+      NotificationEvent.SUBSCRIPTION_ACTIVATED,
+      {
+        planName: plan.name,
+        gymName: gym.name,
+        accessCode: subscription.accessCode
+      }
+    );
 
     return subscription;
   },
 };
+

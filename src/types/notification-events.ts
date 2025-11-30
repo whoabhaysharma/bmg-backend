@@ -33,6 +33,7 @@ export enum NotificationEvent {
     SUBSCRIPTION_EXPIRED = 'SUBSCRIPTION_EXPIRED',
     SUBSCRIPTION_CANCELLED = 'SUBSCRIPTION_CANCELLED',
     SUBSCRIPTION_EXPIRING_SOON = 'SUBSCRIPTION_EXPIRING_SOON',
+    MEMBER_ADDED = 'MEMBER_ADDED',
 
     // Payment Events
     PAYMENT_INITIATED = 'PAYMENT_INITIATED',
@@ -86,6 +87,7 @@ export interface NotificationEventData {
     [NotificationEvent.SUBSCRIPTION_EXPIRED]: { planName: string; gymName: string };
     [NotificationEvent.SUBSCRIPTION_CANCELLED]: { planName: string; gymName: string };
     [NotificationEvent.SUBSCRIPTION_EXPIRING_SOON]: { planName: string; gymName: string; daysLeft: number };
+    [NotificationEvent.MEMBER_ADDED]: { memberName: string; planName: string; gymName: string };
 
     [NotificationEvent.PAYMENT_INITIATED]: { amount: number; planName: string };
     [NotificationEvent.PAYMENT_COMPLETED]: { amount: number; planName: string; transactionId?: string };

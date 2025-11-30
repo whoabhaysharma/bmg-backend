@@ -150,6 +150,12 @@ export const notificationTemplates: Record<NotificationEvent, NotificationTempla
             `Your subscription to "${data.planName}" at ${data.gymName} expires in ${data.daysLeft} days. Renew now!`,
         type: NotificationType.WARNING,
     },
+    [NotificationEvent.MEMBER_ADDED]: {
+        title: () => 'New Member Added',
+        message: (data: NotificationEventData[NotificationEvent.MEMBER_ADDED]) =>
+            `New member "${data.memberName}" has been added to ${data.gymName} with plan "${data.planName}".`,
+        type: NotificationType.SUCCESS,
+    },
 
     // Payment Events
     [NotificationEvent.PAYMENT_INITIATED]: {

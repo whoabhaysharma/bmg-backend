@@ -371,10 +371,15 @@ export const subscriptionService = {
 
     const gym = await prisma.gym.findUnique({
       where: { id: gymId },
-      select: { name: true },
+      select: { name: true, ownerId: true },
     });
 
     if (!gym) throw new Error('GYM_NOT_FOUND');
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true }
+    });
 
     // Check existing active
     const existing = await prisma.subscription.findFirst({
@@ -416,7 +421,7 @@ export const subscriptionService = {
       },
     });
 
-    // ✅ Event-based notification - Subscription Activated
+    // ✅ Event-based notification - Subscription Activated (User)
     await notificationService.notifyUser(
       userId,
       NotificationEvent.SUBSCRIPTION_ACTIVATED,
@@ -426,6 +431,19 @@ export const subscriptionService = {
         accessCode: subscription.accessCode
       }
     );
+
+    // ✅ Event-based notification - New Member Added (Gym Owner)
+    if (gym.ownerId) {
+      await notificationService.notifyUser(
+        gym.ownerId,
+        NotificationEvent.MEMBER_ADDED,
+        {
+          memberName: user?.name || 'Unknown User',
+          planName: plan.name,
+          gymName: gym.name
+        }
+      );
+    }
 
     return subscription;
   },

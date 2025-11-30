@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
-import { gymService, subscriptionPlanService } from '../services';
+import { gymService, planService } from '../services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
 import { Role } from '@prisma/client'; // Assuming Role enum is available
 
@@ -49,7 +49,7 @@ export const createPlan = async (
     }
 
     logger.info(`Creating plan for gymId: ${gymId}, name: ${name}`);
-    const plan = await subscriptionPlanService.createPlan({
+    const plan = await planService.createPlan({
       gymId,
       name,
       description,
@@ -83,7 +83,7 @@ export const getPlansByGym = async (
     // If plans should only be visible to owners/admins, this endpoint must also be secured.
 
     logger.info(`Fetching plans for gymId: ${gymId}`);
-    const plans = await subscriptionPlanService.getPlansByGym(gymId);
+    const plans = await planService.getPlansByGym(gymId as string);
 
     logger.info(`Found ${plans.length} plans for gymId: ${gymId}`);
     return sendSuccess(res, plans);
@@ -113,7 +113,7 @@ export const getPlanById = async (
 
     logger.info(`Fetching plan: ${planId}`);
     // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
-    const plan = await subscriptionPlanService.getPlanById(planId);
+    const plan = await planService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -158,7 +158,7 @@ export const updatePlan = async (
 
     logger.info(`Fetching plan for update: ${planId}`);
     // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
-    const plan = await subscriptionPlanService.getPlanById(planId);
+    const plan = await planService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -175,7 +175,7 @@ export const updatePlan = async (
     }
 
     logger.info(`Updating plan: ${planId}`);
-    const updates: any = {
+    const updateData: any = {
       ...(name && { name }),
       ...(description !== undefined && { description }),
       ...(price !== undefined && { price }),
@@ -188,14 +188,14 @@ export const updatePlan = async (
         logger.warn(`Invalid durationValue provided for update: ${durationValue}`);
         return sendBadRequest(res, 'durationValue must be a positive integer');
       }
-      updates.durationValue = parsed;
+      updateData.durationValue = parsed;
     }
 
     if (durationUnit !== undefined) {
-      updates.durationUnit = durationUnit;
+      updateData.durationUnit = durationUnit;
     }
 
-    const updatedPlan = await subscriptionPlanService.updatePlan(planId, updates);
+    const updatedPlan = await planService.updatePlan(planId, updateData);
 
     logger.info(`Plan updated successfully: ${planId}`);
     return sendSuccess(res, updatedPlan);
@@ -225,7 +225,7 @@ export const deletePlan = async (
 
     logger.info(`Fetching plan for deletion: ${planId}`);
     // Service layer must ensure the related gym is fetched (e.g., include: { gym: true })
-    const plan = await subscriptionPlanService.getPlanById(planId);
+    const plan = await planService.getPlanById(planId);
 
     if (!plan) {
       logger.warn(`Plan not found: ${planId}`);
@@ -242,7 +242,7 @@ export const deletePlan = async (
     }
 
     logger.info(`Deleting plan: ${planId}`);
-    await subscriptionPlanService.deletePlan(planId);
+    await planService.deletePlan(planId);
 
     logger.info(`Plan deleted successfully: ${planId}`);
     // Standard practice for a successful DELETE operation is 204 No Content
@@ -267,7 +267,7 @@ export const getActivePlansByGym = async (
     }
 
     logger.info(`Fetching active plans for gymId: ${gymId}`);
-    const plans = await subscriptionPlanService.getActivePlansByGym(gymId);
+    const plans = await planService.getActivePlansByGym(gymId as string);
 
     logger.info(`Found ${plans.length} active plans for gymId: ${gymId}`);
     return sendSuccess(res, plans);

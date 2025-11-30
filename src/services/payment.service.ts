@@ -36,6 +36,42 @@ export const paymentService = {
     }
   },
 
+  // Create Razorpay Payment Link
+  async createPaymentLink(
+    amount: number,
+    description: string,
+    customer: { name: string; contact: string; email?: string },
+    referenceId: string
+  ) {
+    const amountInPaise = Math.round(amount * 100);
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const link = await (razorpay as any).paymentLink.create({
+        amount: amountInPaise,
+        currency: 'INR',
+        accept_partial: false,
+        description,
+        customer,
+        notify: {
+          sms: true,
+          email: true,
+        },
+        reminder_enable: true,
+        notes: {
+          referenceId,
+        },
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success`, // You might want a specific success page
+        callback_method: 'get',
+      });
+
+      return link;
+    } catch (err) {
+      console.error('Razorpay Payment Link Creation Error:', err);
+      throw new Error('PAYMENT_SERVICE_ERROR: Failed to create payment link');
+    }
+  },
+
   // Verify payment signature
   verifyPaymentSignature(
     orderId: string,

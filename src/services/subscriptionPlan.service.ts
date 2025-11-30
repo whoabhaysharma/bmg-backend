@@ -3,7 +3,7 @@ import { PlanType } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 
-export const subscriptionPlanService = {
+export const planService = {
   // Get all plans (admin)
   async getAllPlans() {
     return prisma.gymSubscriptionPlan.findMany({
@@ -50,6 +50,7 @@ export const subscriptionPlanService = {
     durationValue: number;
     durationUnit?: PlanType;
   }) {
+    console.log('Creating plan with data:', data);
     if (!Number.isInteger(data.durationValue) || data.durationValue <= 0) {
       throw new Error('durationValue must be a positive integer');
     }

@@ -8,6 +8,7 @@ import paymentRoutes from './payment.routes';
 import attendanceRoutes from './attendance.routes';
 import notificationRoutes from './notification.routes';
 import settlementRoutes from './settlement.routes';
+import whatsappRoutes from './whatsapp.routes';
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/settlements', settlementRoutes);
+router.use('/whatsapp', whatsappRoutes);
 
 export default router;

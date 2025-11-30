@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
 import routes from './routes';
+import { limiter } from './middleware/rateLimiter';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -16,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
+
+// Rate limiting
+app.use(limiter);
 
 // Routes
 app.use('/api', routes);

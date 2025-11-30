@@ -6,3 +6,5 @@ export * from './subscription.service';
 export * from './subscriptionPlan.service';
 export * from './user.service';
 export * from './settlement.service';
+export * from './notification.service';
+export * as apiKeyService from './apiKey.service';

@@ -9,6 +9,9 @@ import attendanceRoutes from './attendance.routes';
 import notificationRoutes from './notification.routes';
 import settlementRoutes from './settlement.routes';
 import whatsappRoutes from './whatsapp.routes';
+import apiKeyRoutes from './apiKey.routes';
+
+import { apiAuth } from '../middleware';
 
 const router = Router();
 
@@ -16,14 +19,15 @@ const router = Router();
 router.use('/auth', authRoutes);
 
 // Authenticated user routes
-router.use('/users', userRoutes);
-router.use('/gyms', gymRoutes);
-router.use('/plans', planRoutes);
-router.use('/subscriptions', subscriptionRoutes);
-router.use('/payments', paymentRoutes);
-router.use('/attendance', attendanceRoutes);
-router.use('/notifications', notificationRoutes);
-router.use('/settlements', settlementRoutes);
+router.use('/users', apiAuth, userRoutes);
+router.use('/gyms', apiAuth, gymRoutes);
+router.use('/plans', apiAuth, planRoutes);
+router.use('/subscriptions', apiAuth, subscriptionRoutes);
+router.use('/payments', apiAuth, paymentRoutes);
+router.use('/attendance', apiAuth, attendanceRoutes);
+router.use('/notifications', apiAuth, notificationRoutes);
+router.use('/settlements', apiAuth, settlementRoutes);
 router.use('/whatsapp', whatsappRoutes);
+router.use('/api-keys', apiKeyRoutes);
 
 export default router;

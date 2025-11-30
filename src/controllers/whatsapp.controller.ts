@@ -45,7 +45,7 @@ export const getPlans = async (req: Request, res: Response) => {
     }
 };
 
-export const createSubscription = async (req: Request, res: Response) => {
+export const createWhatsappSubscription = async (req: Request, res: Response) => {
     try {
         const { mobile, planId, gymId } = req.body;
         if (!mobile || !planId || !gymId) return sendBadRequest(res, 'Missing required fields');

@@ -20,7 +20,7 @@ router.use(verifySecret);
 router.get('/user', whatsappController.checkUser);
 router.get('/gyms', whatsappController.getGyms);
 router.get('/plans', whatsappController.getPlans);
-router.post('/subscribe', whatsappController.createSubscription);
+router.post('/subscribe', whatsappController.createWhatsappSubscription);
 router.get('/subscription', whatsappController.checkSubscription);
 
 export default router;

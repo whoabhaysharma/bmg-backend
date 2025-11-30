@@ -49,6 +49,11 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const authReq = req as AuthenticatedRequest;
 
   try {
+    // If user is already authenticated (e.g. via API Key middleware), skip token check
+    if (authReq.user) {
+      return next();
+    }
+
     const authHeader = req.headers.authorization;
 
     // --- TEST EXPECTATION: Must return { message: "Unauthorized" } ---

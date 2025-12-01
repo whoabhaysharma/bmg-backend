@@ -57,19 +57,7 @@ export const getSettlements = async (req: Request, res: Response) => {
                 // Simpler: Fetch all gyms owned by user, then get settlements for those.
                 // Or just let them pass gymId.
                 if (!targetGymId) {
-                    // If owner doesn't pass gymId, maybe return error or handle differently?
-                    // Let's allow fetching all settlements for gyms owned by this user.
-                    // This requires service update or complex query.
-                    // For simplicity, let's require gymId for Owner for now, or handle in service.
-                    // Actually, let's just fetch gyms owned by user.
-                    const myGyms = await prisma.gym.findMany({ where: { ownerId: user.id }, select: { id: true } });
-                    const myGymIds = myGyms.map(g => g.id);
-                    // We need to filter settlements where gymId IN myGymIds.
-                    // Service `getSettlements` currently takes single gymId.
-                    // Let's just update service later if needed. For now, if Owner and no gymId, return error or empty?
-                    // Let's return error "gymId required for Owner view" or similar if we want to keep it simple.
-                    // OR, we can just let the service handle it if we pass a list? No, service takes string.
-                    // Let's stick to: If Owner, must provide gymId.
+                    // If owner doesn't pass gymId, return error for now (service expects gymId as string)
                     return res.status(400).json({ message: 'gymId is required for Owners' });
                 }
             }

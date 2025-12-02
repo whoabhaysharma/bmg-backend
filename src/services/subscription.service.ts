@@ -2,7 +2,7 @@ import { PaymentStatus, PrismaClient, SubscriptionStatus, PlanType, Payment, Sub
 import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 const ACCESS_CODE_LENGTH = 8;
@@ -37,7 +37,7 @@ const calculateSubscriptionEndDate = (
 };
 
 const generateAccessCode = () =>
-  uuidv4().substring(0, ACCESS_CODE_LENGTH).toUpperCase();
+  randomUUID().substring(0, ACCESS_CODE_LENGTH).toUpperCase();
 
 const updatePaymentStatus = async (
   id: string,

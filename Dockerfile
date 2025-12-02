@@ -17,22 +17,25 @@ RUN npx prisma generate
 # Build the TypeScript code
 RUN npm run build
 
-# Production image, copy only necessary files
+# --------------------
+# Production Image
+# --------------------
 FROM node:18-alpine AS production
 WORKDIR /usr/src/app
 
-# Copy only production dependencies
+# Install only production dependencies
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copy built app and necessary files from builder
+# Copy built app and required files
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/prisma ./prisma
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /usr/src/app/.env ./
 
-# Run Prisma migrations (optional, remove if not needed at container start)
-CMD npx prisma migrate deploy && node dist/server.js
+# No .env copied — ENV MUST come at runtime only
 
-# Expose the port (change if your app uses a different port)
+# Start: run migrations then server
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+
+# Expose port (if app uses 3000)
 EXPOSE 3000

@@ -1,8 +1,9 @@
 {
   "info": {
-    "name": "Gym Manager API - Complete & Accurate",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Complete Postman collection with accurate endpoints, request bodies, and maximum automation based on actual controllers and schemas"
+    "_postman_id": "gym-manager-collection",
+    "name": "Gym Manager API",
+    "description": "Comprehensive API Collection for Gym Manager Application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
@@ -10,52 +11,30 @@
       "item": [
         {
           "name": "Send OTP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has success field\", function() {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('success');",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "console.log('✓ OTP sent successfully. Check server logs for OTP.');"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\"\n}"
+              "raw": "{\n    \"mobileNumber\": \"+919876543210\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/send-otp",
+              "raw": "{{baseUrl}}/auth/send-otp",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "auth",
                 "send-otp"
               ]
-            },
-            "description": "Send OTP to phone number (10 digits). OTP will be logged in server console."
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Verify OTP",
@@ -64,25 +43,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Login successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.have.property('token');",
-                  "    pm.expect(jsonData.data).to.have.property('user');",
-                  "    ",
-                  "    // CAPTURE AUTH TOKEN",
-                  "    if(jsonData.data.token) {",
-                  "        pm.collectionVariables.set(\"authToken\", jsonData.data.token);",
-                  "        console.log(\"✓ Auth Token saved\");",
-                  "    }",
-                  "    ",
-                  "    // CAPTURE USER ID",
-                  "    if(jsonData.data.user && jsonData.data.user.id) {",
-                  "        pm.collectionVariables.set(\"userId\", jsonData.data.user.id);",
-                  "        console.log(\"✓ User ID saved:\", jsonData.data.user.id);",
-                  "    }",
-                  "});"
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"authToken\", jsonData.token);",
+                  "    console.log(\"Token set:\", jsonData.token);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -90,29 +55,28 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otp\": \"{{otp}}\"\n}"
+              "raw": "{\n    \"mobileNumber\": \"+919876543210\",\n    \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "raw": "{{baseUrl}}/auth/verify-otp",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "auth",
                 "verify-otp"
               ]
-            },
-            "description": "Verify OTP and get JWT token. Returns token and user details."
-          }
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -121,265 +85,179 @@
       "item": [
         {
           "name": "Get My Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Profile retrieved successfully\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    console.log('✓ Profile:', jsonData.data);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/me/profile",
+              "raw": "{{baseUrl}}/users/me/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 "me",
                 "profile"
               ]
-            },
-            "description": "Get current user's profile with relations (gyms, subscriptions)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Update My Profile",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+              "raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/me/profile",
+              "raw": "{{baseUrl}}/users/me/profile",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 "me",
                 "profile"
               ]
-            },
-            "description": "Update current user's name (only name can be updated)"
-          }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upgrade to Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/upgrade-to-owner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "upgrade-to-owner"
+              ]
+            }
+          },
+          "response": []
         },
         {
           "name": "Get All Users (Admin)",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users?page=1&limit=10&includeDeleted=false",
+              "raw": "{{baseUrl}}/users",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number"
-                },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Items per page"
-                },
-                {
-                  "key": "includeDeleted",
-                  "value": "false",
-                  "description": "Include soft-deleted users"
-                }
               ]
-            },
-            "description": "Get all users with pagination (Admin only)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Get User By ID",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/:id",
+              "raw": "{{baseUrl}}/users/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 ":id"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{userId}}"
+                  "value": ""
                 }
               ]
-            },
-            "description": "Get user by ID (Admin or self only)"
-          }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Get User Profile",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/:id/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                ":id",
-                "profile"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Get extended profile with gyms and subscriptions (Admin or self only)"
-          }
-        },
-        {
-          "name": "Update User",
+          "name": "Update User (Admin)",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated User Name\"\n}"
+              "raw": "{\n    \"name\": \"Admin Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/:id",
+              "raw": "{{baseUrl}}/users/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 ":id"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{userId}}"
+                  "value": ""
                 }
               ]
-            },
-            "description": "Update user (Admin or self only). Non-admins cannot update roles."
-          }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Delete User (Soft)",
+          "name": "Delete User (Admin)",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/:id",
+              "raw": "{{baseUrl}}/users/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 ":id"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{userId}}"
+                  "value": ""
                 }
               ]
-            },
-            "description": "Soft delete user (Admin or self only)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Restore User (Admin)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/:id/restore",
+              "raw": "{{baseUrl}}/users/:id/restore",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 ":id",
                 "restore"
@@ -387,38 +265,33 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{userId}}"
+                  "value": ""
                 }
               ]
-            },
-            "description": "Restore soft-deleted user (Admin only)"
-          }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Add Role (Admin)",
+          "name": "Manage Role (Admin)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"OWNER\",\n  \"action\": \"add\"\n}"
+              "raw": "{\n    \"role\": \"ADMIN\",\n    \"action\": \"add\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/:id/role",
+              "raw": "{{baseUrl}}/users/:id/role",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "users",
                 ":id",
                 "role"
@@ -426,51 +299,12 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{userId}}"
+                  "value": ""
                 }
               ]
-            },
-            "description": "Add role to user (Admin only). Roles: USER, OWNER, ADMIN. Action: add or remove"
-          }
-        },
-        {
-          "name": "Remove Role (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"role\": \"OWNER\",\n  \"action\": \"remove\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users/:id/role",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "users",
-                ":id",
-                "role"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{userId}}"
-                }
-              ]
-            },
-            "description": "Remove role from user (Admin only)"
-          }
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -479,195 +313,77 @@
       "item": [
         {
           "name": "Create Gym",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Gym Created\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    ",
-                  "    // CAPTURE GYM ID",
-                  "    if(jsonData.data && jsonData.data.id) {",
-                  "        pm.collectionVariables.set(\"gymId\", jsonData.data.id);",
-                  "        console.log(\"✓ Gym ID saved:\", jsonData.data.id);",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript"
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"My Gym\",\n    \"address\": \"123 Gym St\",\n    \"description\": \"Best gym ever\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gyms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gyms"
+              ]
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Elite Fitness Gym\",\n  \"address\": \"123 Main Street, City, State\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/gyms",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "gyms"
-              ]
-            },
-            "description": "Create gym (Owner or Admin). Gym is automatically assigned to current user unless admin specifies ownerId."
-          }
-        },
-        {
-          "name": "Create Gym (Admin for Another Owner)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Another Gym\",\n  \"address\": \"456 Another Street\",\n  \"ownerId\": \"{{userId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/gyms",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "gyms"
-              ]
-            },
-            "description": "Admin can create gym for another user by specifying ownerId"
-          }
+          },
+          "response": []
         },
         {
           "name": "Get All Gyms",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Get all gyms successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    ",
-                  "    // AUTO-SELECT FIRST GYM IF AVAILABLE",
-                  "    if(jsonData.data && jsonData.data.length > 0) {",
-                  "        const firstGymId = jsonData.data[0].id;",
-                  "        pm.collectionVariables.set(\"gymId\", firstGymId);",
-                  "        console.log(\"✓ Gym ID set to:\", firstGymId);",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms",
+              "raw": "{{baseUrl}}/gyms",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms"
               ]
-            },
-            "description": "Get all gyms (authenticated users)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Get My Owned Gyms",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Get My Gyms\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    ",
-                  "    // AUTOMATICALLY SELECT FIRST GYM IF AVAILABLE",
-                  "    if(jsonData.success && jsonData.data && jsonData.data.length > 0) {",
-                  "        const firstGymId = jsonData.data[0].id;",
-                  "        pm.collectionVariables.set(\"gymId\", firstGymId);",
-                  "        console.log(\"✓ Gym ID set to owned gym:\", firstGymId);",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/me/owned",
+              "raw": "{{baseUrl}}/gyms/me/owned",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 "me",
                 "owned"
               ]
-            },
-            "description": "Get gyms owned by current user"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Get Gym By ID",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
+              "raw": "{{baseUrl}}/gyms/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 ":id"
               ],
@@ -677,35 +393,30 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Get gym details by ID"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Update Gym",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Elite Fitness\",\n  \"address\": \"456 New Street, City, State\"\n}"
+              "raw": "{\n    \"name\": \"Updated Gym Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
+              "raw": "{{baseUrl}}/gyms/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 ":id"
               ],
@@ -715,27 +426,21 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Update gym (Owner or Admin only)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Delete Gym",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id",
+              "raw": "{{baseUrl}}/gyms/:id",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 ":id"
               ],
@@ -745,27 +450,21 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Delete gym (Owner or Admin only). Returns 204 No Content."
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Verify Gym (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id/verify",
+              "raw": "{{baseUrl}}/gyms/:id/verify",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 ":id",
                 "verify"
@@ -776,27 +475,21 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Verify gym (Admin only)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Unverify Gym (Admin)",
           "request": {
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/gyms/:id/unverify",
+              "raw": "{{baseUrl}}/gyms/:id/unverify",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "gyms",
                 ":id",
                 "unverify"
@@ -807,9 +500,34 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Unverify gym (Admin only)"
-          }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gym Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/gyms/:id/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gyms",
+                ":id",
+                "stats"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -818,154 +536,88 @@
       "item": [
         {
           "name": "Create Plan",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Create plan successful\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    ",
-                  "    // CAPTURE PLAN ID",
-                  "    if(jsonData.data && jsonData.data.id) {",
-                  "        pm.collectionVariables.set('planId', jsonData.data.id);",
-                  "        console.log('✓ Plan ID saved:', jsonData.data.id);",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gymId\": \"{{gymId}}\",\n  \"name\": \"Monthly Premium\",\n  \"description\": \"Full gym access for one month\",\n  \"durationValue\": 1,\n  \"durationUnit\": \"MONTH\",\n  \"price\": 1500\n}"
+              "raw": "{\n    \"name\": \"Gold Plan\",\n    \"price\": 1000,\n    \"duration\": 30,\n    \"description\": \"Access to all equipment\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/plans",
+              "raw": "{{baseUrl}}/plans",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans"
               ]
-            },
-            "description": "Create plan (Owner or Admin). durationValue must be positive integer. durationUnit: DAY, WEEK, MONTH, YEAR. Price is in smallest currency unit (paise for INR)."
-          }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Get All Plans for Gym",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Get plans successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    ",
-                  "    // AUTO-SELECT FIRST PLAN",
-                  "    if(jsonData.data && jsonData.data.length > 0) {",
-                  "        pm.collectionVariables.set('planId', jsonData.data[0].id);",
-                  "        console.log('✓ Plan ID set to:', jsonData.data[0].id);",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get Plans By Gym",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/plans?gymId={{gymId}}",
+              "raw": "{{baseUrl}}/plans?gymId={{gymId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans"
               ],
               "query": [
                 {
                   "key": "gymId",
-                  "value": "{{gymId}}",
-                  "description": "Required: Gym ID"
+                  "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Get all plans for a gym (public endpoint)"
-          }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Get Active Plans for Gym",
+          "name": "Get Active Plans",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/plans/active?gymId={{gymId}}",
+              "raw": "{{baseUrl}}/plans/active?gymId={{gymId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans",
                 "active"
               ],
               "query": [
                 {
                   "key": "gymId",
-                  "value": "{{gymId}}",
-                  "description": "Required: Gym ID"
+                  "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Get only active plans for a gym"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Get Plan By ID",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/plans/:planId",
+              "raw": "{{baseUrl}}/plans/:planId",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans",
                 ":planId"
               ],
@@ -975,35 +627,30 @@
                   "value": "{{planId}}"
                 }
               ]
-            },
-            "description": "Get plan by ID (Owner or Admin only)"
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Update Plan",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Quarterly Premium\",\n  \"description\": \"Updated description\",\n  \"durationValue\": 3,\n  \"durationUnit\": \"MONTH\",\n  \"price\": 3500,\n  \"isActive\": true\n}"
+              "raw": "{\n    \"name\": \"Updated Plan Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/plans/:planId",
+              "raw": "{{baseUrl}}/plans/:planId",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans",
                 ":planId"
               ],
@@ -1013,27 +660,21 @@
                   "value": "{{planId}}"
                 }
               ]
-            },
-            "description": "Update plan (Owner or Admin only). All fields are optional."
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Delete Plan",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/plans/:planId",
+              "raw": "{{baseUrl}}/plans/:planId",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "plans",
                 ":planId"
               ],
@@ -1043,9 +684,9 @@
                   "value": "{{planId}}"
                 }
               ]
-            },
-            "description": "Delete plan (Owner or Admin only). Returns 204 No Content."
-          }
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1053,162 +694,123 @@
       "name": "Subscriptions",
       "item": [
         {
-          "name": "Create Subscription",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Subscription created\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.include('Subscription created');",
-                  "    ",
-                  "    // CAPTURE SUBSCRIPTION ID AND ORDER ID",
-                  "    if(jsonData.data && jsonData.data.subscription) {",
-                  "        pm.collectionVariables.set('subscriptionId', jsonData.data.subscription.id);",
-                  "        console.log('✓ Subscription ID saved:', jsonData.data.subscription.id);",
-                  "    }",
-                  "    if(jsonData.data && jsonData.data.order) {",
-                  "        pm.collectionVariables.set('razorpayOrderId', jsonData.data.order.id);",
-                  "        console.log('✓ Razorpay Order ID saved:', jsonData.data.order.id);",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ],
+          "name": "Create Subscription (App)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"planId\": \"{{planId}}\",\n  \"gymId\": \"{{gymId}}\"\n}"
+              "raw": "{\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\",\n    \"source\": \"APP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/subscriptions",
+              "raw": "{{baseUrl}}/subscriptions",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "subscriptions"
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Console Subscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"USER_ID_HERE\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\",\n    \"startDate\": \"2023-01-01\",\n    \"paymentMode\": \"CASH\",\n    \"amountPaid\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "description": "Create subscription and generate Razorpay payment order. Returns subscription with PENDING status and Razorpay order details."
-          }
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/console",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subscriptions",
+                "console"
+              ]
+            }
+          },
+          "response": []
         },
         {
           "name": "Get My Subscriptions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Get subscriptions\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    const jsonData = pm.response.json();",
-                  "    ",
-                  "    if (jsonData.data && jsonData.data.length > 0) {",
-                  "        pm.collectionVariables.set('subscriptionId', jsonData.data[0].id);",
-                  "        console.log('✓ Subscription ID refreshed:', jsonData.data[0].id);",
-                  "        ",
-                  "        // Also capture access code if available",
-                  "        if(jsonData.data[0].accessCode) {",
-                  "            pm.collectionVariables.set('accessCode', jsonData.data[0].accessCode);",
-                  "            console.log('✓ Access code saved:', jsonData.data[0].accessCode);",
-                  "        }",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/subscriptions/my-subscriptions",
+              "raw": "{{baseUrl}}/subscriptions/my-subscriptions",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "subscriptions",
                 "my-subscriptions"
               ]
-            },
-            "description": "Get all subscriptions for current user with gym, plan, and payment details"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Payments",
-      "item": [
-        {
-          "name": "Verify Payment",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Payment verification successful\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('subscription');",
-                  "    console.log('✓ Payment verified and subscription activated');",
-                  "});"
-                ]
-              }
             }
-          ],
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gym Subscriptions",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"razorpay_order_id\": \"order_xxx\",\n  \"razorpay_payment_id\": \"pay_xxx\",\n  \"razorpay_signature\": \"signature_xxx\"\n}"
-            },
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/payments/verify",
+              "raw": "{{baseUrl}}/subscriptions?gymId={{gymId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
-                "payments",
-                "verify"
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
               ]
-            },
-            "description": "Verify Razorpay payment signature and activate subscription. All three Razorpay fields are required."
-          }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Subscription",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subscriptions/:id/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subscriptions",
+                ":id",
+                "activate"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1216,75 +818,25 @@
       "name": "Attendance",
       "item": [
         {
-          "name": "Get My Attendance",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/attendance/me?gymId={{gymId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "attendance",
-                "me"
-              ],
-              "query": [
-                {
-                  "key": "gymId",
-                  "value": "{{gymId}}",
-                  "description": "Optional: Filter by gym ID",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "Get attendance history for current user. Optional gymId query parameter to filter by gym."
-          }
-        },
-        {
           "name": "Check In",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Check-in successful\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "    ",
-                  "    // CAPTURE ATTENDANCE ID",
-                  "    if(jsonData.data && jsonData.data.id) {",
-                  "        pm.collectionVariables.set('attendanceId', jsonData.data.id);",
-                  "        console.log('✓ Attendance ID saved:', jsonData.data.id);",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"location\": {\n        \"lat\": 12.9716,\n        \"lng\": 77.5946\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
-            ],
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/attendance/gym/:gymId/check-in",
+              "raw": "{{baseUrl}}/attendance/gym/:gymId/check-in",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "attendance",
                 "gym",
                 ":gymId",
@@ -1296,27 +848,21 @@
                   "value": "{{gymId}}"
                 }
               ]
-            },
-            "description": "Check in to a gym. Creates attendance record with check-in time."
-          }
+            }
+          },
+          "response": []
         },
         {
           "name": "Check Out",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{authToken}}"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/attendance/:attendanceId/check-out",
+              "raw": "{{baseUrl}}/attendance/:attendanceId/check-out",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api",
                 "attendance",
                 ":attendanceId",
                 "check-out"
@@ -1324,33 +870,540 @@
               "variable": [
                 {
                   "key": "attendanceId",
-                  "value": "{{attendanceId}}"
+                  "value": ""
                 }
               ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Check In (Owner/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"USER_ID\",\n    \"checkInTime\": \"2023-01-01T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "description": "Check out from gym. Updates attendance record with check-out time and calculates duration."
-          }
+            "url": {
+              "raw": "{{baseUrl}}/attendance/gym/:gymId/verify-check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "gym",
+                ":gymId",
+                "verify-check-in"
+              ],
+              "variable": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Attendance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"razorpay_order_id\": \"order_123\",\n    \"razorpay_payment_id\": \"pay_123\",\n    \"razorpay_signature\": \"sig_123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Settlements",
+      "item": [
+        {
+          "name": "Create Settlement (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gymId\": \"{{gymId}}\",\n    \"amount\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/settlements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Process Settlement (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settlements/:id/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements",
+                ":id",
+                "process"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Settlements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settlements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unsettled Amount",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settlements/unsettled",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements",
+                "unsettled"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "API Keys",
+      "item": [
+        {
+          "name": "Create API Key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Key\",\n    \"scopes\": [\"read\", \"write\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle API Key Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp",
+      "item": [
+        {
+          "name": "Check User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-whatsapp-secret",
+                "value": "{{whatsappSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/user?mobile=+919876543210",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "whatsapp",
+                "user"
+              ],
+              "query": [
+                {
+                  "key": "mobile",
+                  "value": "+919876543210"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gyms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-whatsapp-secret",
+                "value": "{{whatsappSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/gyms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "whatsapp",
+                "gyms"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-whatsapp-secret",
+                "value": "{{whatsappSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/plans?gymId={{gymId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "whatsapp",
+                "plans"
+              ],
+              "query": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Subscribe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-whatsapp-secret",
+                "value": "{{whatsappSecret}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mobile\": \"+919876543210\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/subscribe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "whatsapp",
+                "subscribe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-whatsapp-secret",
+                "value": "{{whatsappSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/subscription?mobile=+919876543210",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "whatsapp",
+                "subscription"
+              ],
+              "query": [
+                {
+                  "key": "mobile",
+                  "value": "+919876543210"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "event": [
     {
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Pre-request global check",
-          "const authToken = pm.collectionVariables.get('authToken');",
-          "const requestName = pm.info.requestName;",
-          "",
-          "// Skip auth check for auth endpoints",
-          "if (!authToken && !requestName.includes('OTP') && !requestName.includes('Auth')) {",
-          "    console.warn('⚠️ No auth token set. Run Auth > Verify OTP first.');",
-          "}",
-          "",
-          "// Log current request",
-          "console.log('🚀 Request:', requestName);"
+          ""
         ]
       }
     },
@@ -1359,23 +1412,7 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Global response validation",
-          "pm.test(\"Response time is acceptable\", function() {",
-          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
-          "});",
-          "",
-          "// Log response status",
-          "console.log('📊 Status:', pm.response.code, pm.response.status);",
-          "",
-          "// Try to parse and log response",
-          "try {",
-          "    const jsonData = pm.response.json();",
-          "    if(jsonData.success === false && jsonData.error) {",
-          "        console.error('❌ Error:', jsonData.error);",
-          "    }",
-          "} catch(e) {",
-          "    // Not JSON, skip",
-          "}"
+          ""
         ]
       }
     }
@@ -1383,68 +1420,28 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3000/api",
       "type": "string"
-    },
-    {
-      "key": "phoneNumber",
-      "value": "1234567890",
-      "type": "string",
-      "description": "10-digit phone number for OTP authentication"
-    },
-    {
-      "key": "otp",
-      "value": "123456",
-      "type": "string",
-      "description": "OTP code (check server logs after sending OTP)"
     },
     {
       "key": "authToken",
       "value": "",
-      "type": "string",
-      "description": "JWT token (auto-captured from verify OTP)"
-    },
-    {
-      "key": "userId",
-      "value": "",
-      "type": "string",
-      "description": "Current user ID (auto-captured)"
+      "type": "string"
     },
     {
       "key": "gymId",
       "value": "",
-      "type": "string",
-      "description": "Gym ID (auto-captured)"
+      "type": "string"
     },
     {
       "key": "planId",
       "value": "",
-      "type": "string",
-      "description": "Plan ID (auto-captured)"
+      "type": "string"
     },
     {
-      "key": "subscriptionId",
-      "value": "",
-      "type": "string",
-      "description": "Subscription ID (auto-captured)"
-    },
-    {
-      "key": "attendanceId",
-      "value": "",
-      "type": "string",
-      "description": "Attendance ID (auto-captured)"
-    },
-    {
-      "key": "accessCode",
-      "value": "",
-      "type": "string",
-      "description": "Subscription access code (auto-captured)"
-    },
-    {
-      "key": "razorpayOrderId",
-      "value": "",
-      "type": "string",
-      "description": "Razorpay order ID (auto-captured)"
+      "key": "whatsappSecret",
+      "value": "your_secret_here",
+      "type": "string"
     }
   ]
 }

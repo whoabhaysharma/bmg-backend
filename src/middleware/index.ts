@@ -4,3 +4,4 @@ export * from './authorize';
 export * from './isAdmin';
 export * from './isOwner';
 export * from './apiAuth';
+export * from './verifySecret';

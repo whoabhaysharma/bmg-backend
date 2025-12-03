@@ -57,6 +57,61 @@ export const verifyPayment = async (req: Request, res: Response) => {
   }
 };
 
+export const handleWebhook = async (req: Request, res: Response) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'] as string;
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    console.log('Webhook Received:', {
+      signature,
+      secretSet: !!secret,
+      bodyType: typeof req.body,
+      rawBodyType: typeof (req as any).rawBody
+    });
+
+    if (!secret) {
+      console.error('RAZORPAY_WEBHOOK_SECRET is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    if (!paymentService.verifyWebhookSignature((req as any).rawBody, signature, secret)) {
+      console.error('Invalid webhook signature');
+      return res.status(400).json({ message: 'Invalid webhook signature' });
+    }
+
+    const event = req.body;
+    console.log('Webhook Event:', event.event);
+
+    if (event.event === 'payment.captured' || event.event === 'order.paid' || event.event === 'payment.authorized') {
+      const paymentEntity = event.payload.payment.entity;
+      console.log('Payment Entity:', JSON.stringify(paymentEntity, null, 2));
+
+      const orderId = paymentEntity.order_id;
+      const paymentId = paymentEntity.id;
+      const notes = paymentEntity.notes;
+      const subscriptionId = notes?.subscriptionId;
+
+      console.log('Extracted Data:', { orderId, paymentId, notes, subscriptionId });
+
+      // We don't have the frontend signature here, but we have verified the webhook signature.
+      // We can pass a placeholder or modify handlePaymentSuccess to accept trusted calls.
+      // For now, let's pass 'WEBHOOK_VERIFIED' as signature.
+
+      await subscriptionService.handlePaymentSuccess(
+        orderId,
+        paymentId,
+        'WEBHOOK_VERIFIED',
+        subscriptionId
+      );
+    }
+
+    return res.status(200).json({ status: 'ok' });
+  } catch (error: any) {
+    console.error('Webhook error:', error);
+    return res.status(500).json({ message: 'Webhook processing failed' });
+  }
+};
+
 export const getAllPayments = async (req: Request, res: Response) => {
   try {
     const { gymId, userId, source, status, settlementStatus, startDate, endDate, page, limit } = req.query;

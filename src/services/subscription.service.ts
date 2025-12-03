@@ -108,7 +108,9 @@ export const subscriptionService = {
     // --- Payment Order Creation ---
     let order;
     try {
-      order = await paymentService.createOrder(plan.price, subscription.id);
+      order = await paymentService.createOrder(plan.price, subscription.id, 'INR', {
+        subscriptionId: subscription.id
+      });
     } catch (err) {
       // match test's expected error mapping
       throw new Error('PAYMENT_SERVICE_ERROR');
@@ -152,26 +154,68 @@ export const subscriptionService = {
   async handlePaymentSuccess(
     razorpayOrderId: string,
     razorpayPaymentId: string,
-    razorpaySignature: string
+    razorpaySignature: string,
+    subscriptionId?: string
   ) {
-    const payment = await prisma.payment.findFirst({
-      where: { razorpayOrderId },
-      include: {
-        subscription: {
-          include: {
-            plan: true,
-            user: true,
-            gym: {
-              include: {
-                owner: true
+    console.log('Handling Payment Success:', { razorpayOrderId, razorpayPaymentId, subscriptionId });
+
+    let payment;
+
+    // 1. Try finding by Order ID or Payment ID
+    if (razorpayOrderId || razorpayPaymentId) {
+      payment = await prisma.payment.findFirst({
+        where: {
+          OR: [
+            { razorpayOrderId: razorpayOrderId || undefined },
+            { razorpayPaymentId: razorpayPaymentId || undefined }
+          ]
+        },
+        include: {
+          subscription: {
+            include: {
+              plan: true,
+              user: true,
+              gym: {
+                include: {
+                  owner: true
+                }
               }
-            }
+            },
           },
         },
-      },
-    });
+      });
+      console.log('Lookup by ID result:', payment ? 'Found' : 'Not Found');
+    }
 
-    if (!payment) throw new Error('PAYMENT_RECORD_NOT_FOUND');
+    // 2. Fallback: Try finding by Subscription ID (Pending Payment)
+    if (!payment && subscriptionId) {
+      console.log('Payment not found by IDs, trying subscriptionId:', subscriptionId);
+      payment = await prisma.payment.findFirst({
+        where: {
+          subscriptionId: subscriptionId,
+          status: PaymentStatus.PENDING
+        },
+        include: {
+          subscription: {
+            include: {
+              plan: true,
+              user: true,
+              gym: {
+                include: {
+                  owner: true
+                }
+              }
+            },
+          },
+        },
+      });
+      console.log('Lookup by SubscriptionID result:', payment ? 'Found' : 'Not Found');
+    }
+
+    if (!payment) {
+      console.error('CRITICAL: Payment record not found for', { razorpayOrderId, razorpayPaymentId, subscriptionId });
+      throw new Error('PAYMENT_RECORD_NOT_FOUND');
+    }
 
     // Already completed (test checks this)
     if (payment.status === PaymentStatus.COMPLETED) {

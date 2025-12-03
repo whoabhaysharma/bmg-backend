@@ -85,3 +85,53 @@ export const verifyOtp = async (
     sendError(res, 'Failed to verify OTP');
   }
 };
+
+export const createMagicLink = async (req: Request, res: Response) => {
+  try {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) return sendBadRequest(res, 'Phone number is required');
+
+    const token = await AuthService.generateMagicToken(phoneNumber);
+    // Assuming frontend is running on localhost:3000 for now, as per plan
+    // In production, this should be an env variable
+    const magicLink = `http://localhost:3000/booking?token=${token}`;
+
+    return sendSuccess(res, { magicLink });
+  } catch (error) {
+    logger.error('Error creating magic link', error);
+    return sendError(res, 'Failed to create magic link');
+  }
+};
+
+export const loginWithMagicLink = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    if (!token) return sendBadRequest(res, 'Token is required');
+
+    const user = await AuthService.verifyMagicToken(token);
+    if (!user) return sendBadRequest(res, 'Invalid or expired token');
+
+    const jwtToken = jwt.sign(
+      {
+        userId: user.id,
+        name: user.name,
+        roles: user.roles,
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return sendSuccess(res, {
+      token: jwtToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        mobileNumber: user.mobileNumber,
+        roles: user.roles,
+      },
+    });
+  } catch (error) {
+    logger.error('Error logging in with magic link', error);
+    return sendError(res, 'Failed to login with magic link');
+  }
+};

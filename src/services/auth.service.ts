@@ -22,18 +22,33 @@ export const AuthService = {
 
   async findOrCreateUser(phoneNumber: string): Promise<User> {
     let user = await prisma.user.findUnique({
-      where: { mobileNumber: phoneNumber },
+      where: { mobileNumber: String(phoneNumber) },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          mobileNumber: phoneNumber,
+          mobileNumber: String(phoneNumber),
           name: '', // Placeholder, user should update profile
         },
       });
     }
     return user;
+  },
+
+  async generateMagicToken(phoneNumber: string): Promise<string> {
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    await redis.set(`magic_token:${token}`, phoneNumber, { ex: 900 }); // Expires in 15 minutes
+    return token;
+  },
+
+  async verifyMagicToken(token: string): Promise<User | null> {
+    const phoneNumber = await redis.get(`magic_token:${token}`);
+    if (!phoneNumber) return null;
+
+    await redis.del(`magic_token:${token}`); // One-time use
+
+    return this.findOrCreateUser(phoneNumber as string);
   }
 }
 

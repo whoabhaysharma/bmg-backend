@@ -1,19 +1,8 @@
 import { Router } from 'express';
 import * as whatsappController from '../controllers/whatsapp.controller';
+import { verifySecret } from '../middleware';
 
 const router = Router();
-
-// Middleware to verify internal secret (simple security)
-const verifySecret = (req: any, _res: any, next: any) => {
-    const secret = req.headers['x-whatsapp-secret'];
-    if (secret !== process.env.WHATSAPP_BACKEND_SECRET) {
-        // For now, let's just log and proceed or skip if env not set
-        // In prod, this should be strict.
-        // return res.status(403).json({ message: 'Forbidden' });
-        console.warn('Invalid WhatsApp Secret');
-    }
-    next();
-};
 
 // Public routes (secured by secret)
 router.use(verifySecret);

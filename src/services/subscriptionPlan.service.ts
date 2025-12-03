@@ -4,14 +4,58 @@ import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 
 export const planService = {
-  // Get all plans (admin)
-  async getAllPlans() {
-    return prisma.gymSubscriptionPlan.findMany({
-      include: {
-        gym: true,
-        subscriptions: true,
+  // Get all plans (admin/owner)
+  async getAllPlans(filters: {
+    gymId?: string | string[];
+    isActive?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const { gymId, isActive, search, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (gymId) {
+      if (Array.isArray(gymId)) {
+        where.gymId = { in: gymId };
+      } else {
+        where.gymId = gymId;
+      }
+    }
+
+    if (isActive !== undefined) where.isActive = isActive;
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [plans, total] = await Promise.all([
+      prisma.gymSubscriptionPlan.findMany({
+        where,
+        include: {
+          gym: { select: { name: true } },
+          _count: { select: { subscriptions: true } },
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.gymSubscriptionPlan.count({ where }),
+    ]);
+
+    return {
+      data: plans,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   },
 
   // Get plan by id

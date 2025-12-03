@@ -3,14 +3,33 @@ import { notificationService } from '../services/notification.service';
 import { getAuthUser } from '../utils/getAuthUser';
 import { sendSuccess, sendError, sendUnauthorized } from '../utils/response';
 
-export const getMyNotifications: RequestHandler = async (req, res) => {
+import { NotificationType } from '@prisma/client';
+
+export const getNotifications: RequestHandler = async (req, res) => {
     const user = getAuthUser(req);
     if (!user) return sendUnauthorized(res);
 
     try {
-        const notifications = await notificationService.getUserNotifications(user.id);
-        const unreadCount = await notificationService.getUnreadCount(user.id);
-        return sendSuccess(res, { notifications, unreadCount });
+        const { userId, type, isRead, page, limit } = req.query;
+        const userRoles = user.roles || [];
+
+        let filterUserId: string | undefined = userId as string;
+
+        // Admin can view any user's notifications.
+        // Regular users (and Owners) can only view their own.
+        if (!userRoles.includes('ADMIN')) {
+            filterUserId = user.id;
+        }
+
+        const result = await notificationService.getNotifications({
+            userId: filterUserId,
+            type: type as NotificationType,
+            isRead: isRead === 'true' ? true : isRead === 'false' ? false : undefined,
+            page: Number(page) || 1,
+            limit: Number(limit) || 10,
+        });
+
+        return sendSuccess(res, result);
     } catch (error: any) {
         return sendError(res, error.message || 'Failed to fetch notifications');
     }

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Role } from '@prisma/client';
 import {
     createPlan,
-    getPlansByGym,
+    getAllPlans,
     getPlanById,
     updatePlan,
     deletePlan,
@@ -23,7 +23,7 @@ router.post(
 );
 
 // Get all plans for a gym (by query parameter)
-router.get('/', isAuthenticated, getPlansByGym);
+router.get('/', isAuthenticated, getAllPlans);
 
 // Get active plans for a gym (by query parameter)
 router.get('/active', isAuthenticated, getActivePlansByGym);

@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { settlementService } from '../services';
 import { SettlementStatus } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 export const createSettlement = async (req: Request, res: Response) => {
     try {
@@ -31,42 +30,55 @@ export const createSettlement = async (req: Request, res: Response) => {
 
 export const getSettlements = async (req: Request, res: Response) => {
     try {
-        const { gymId, status } = req.query;
+        const { gymId, status, startDate, endDate, page, limit } = req.query;
         const user = (req as any).user;
         const userRoles = user.roles || [];
 
-        // Authorization
-        // Admin can see all. Owner can see their own gyms.
-
-        let targetGymId = gymId as string | undefined;
+        let filterGymId: string | string[] | undefined = gymId as string;
 
         if (userRoles.includes('ADMIN')) {
-            // Admin can filter by gymId or see all
+            // Admin can filter freely
         } else if (userRoles.includes('OWNER')) {
-            // Owner can only see their own gyms
-            // If gymId is provided, verify ownership
-            if (targetGymId) {
-                const gym = await prisma.gym.findUnique({ where: { id: targetGymId }, select: { ownerId: true } });
+            // Owner Logic
+            if (filterGymId) {
+                // Verify ownership
+                const gym = await prisma.gym.findUnique({
+                    where: { id: filterGymId as string },
+                    select: { ownerId: true }
+                });
+
                 if (!gym || gym.ownerId !== user.id) {
                     return res.status(403).json({ message: 'Not authorized for this gym' });
                 }
             } else {
-                // If no gymId, we ideally should fetch all gyms owned by user and filter
-                // But service.getSettlements takes optional gymId.
-                // For now, let's enforce gymId for Owners or fetch their gyms.
-                // Simpler: Fetch all gyms owned by user, then get settlements for those.
-                // Or just let them pass gymId.
-                if (!targetGymId) {
-                    // If owner doesn't pass gymId, return error for now (service expects gymId as string)
-                    return res.status(400).json({ message: 'gymId is required for Owners' });
+                // Fetch all owned gyms
+                const myGyms = await prisma.gym.findMany({
+                    where: { ownerId: user.id },
+                    select: { id: true }
+                });
+
+                if (myGyms.length === 0) {
+                    return res.status(200).json({
+                        data: [],
+                        meta: { total: 0, page: 1, limit: 10, totalPages: 0 }
+                    });
                 }
+                filterGymId = myGyms.map(g => g.id);
             }
         } else {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        const settlements = await settlementService.getSettlements(targetGymId, status as SettlementStatus);
-        return res.status(200).json({ data: settlements });
+        const result = await settlementService.getSettlements({
+            gymId: filterGymId,
+            status: status as SettlementStatus,
+            startDate: startDate ? new Date(startDate as string) : undefined,
+            endDate: endDate ? new Date(endDate as string) : undefined,
+            page: Number(page) || 1,
+            limit: Number(limit) || 10,
+        });
+
+        return res.status(200).json(result);
 
     } catch (error: any) {
         console.error('Get settlements error:', error);

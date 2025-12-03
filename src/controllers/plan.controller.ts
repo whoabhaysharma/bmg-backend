@@ -3,7 +3,8 @@ import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
 import { gymService, planService } from '../services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
-import { Role } from '@prisma/client'; // Assuming Role enum is available
+import { Role } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 // Create a new subscription plan
 export const createPlan = async (
@@ -66,27 +67,67 @@ export const createPlan = async (
   }
 };
 
-// Get all plans for a gym
-export const getPlansByGym = async (
+
+
+// Get all plans (Admin/Owner/Public)
+export const getAllPlans = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const { gymId } = req.query;
+    const { gymId, isActive, search, page, limit } = req.query;
+    const user = (req as any).user; // Might be undefined if public
+    const userRoles = user?.roles || [];
 
-    if (!gymId || typeof gymId !== 'string') {
-      logger.warn('gymId is required');
-      return sendBadRequest(res, 'gymId is required');
+    let filterGymId: string | string[] | undefined = gymId as string;
+    let filterIsActive: boolean | undefined = isActive === 'true' ? true : isActive === 'false' ? false : undefined;
+
+    // If authenticated as Admin or Owner
+    if (user) {
+      if (userRoles.includes('ADMIN')) {
+        // Admin: filter freely
+      } else if (userRoles.includes('OWNER')) {
+        // Owner: Restricted to owned gyms
+        if (filterGymId) {
+          const gym = await prisma.gym.findUnique({
+            where: { id: filterGymId as string },
+            select: { ownerId: true }
+          });
+          if (!gym || gym.ownerId !== user.id) {
+            return sendForbidden(res, 'Not authorized for this gym');
+          }
+        } else {
+          // Fetch all owned gyms
+          const myGyms = await prisma.gym.findMany({
+            where: { ownerId: user.id },
+            select: { id: true }
+          });
+          if (myGyms.length === 0) {
+            return sendSuccess(res, { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } });
+          }
+          filterGymId = myGyms.map(g => g.id);
+        }
+      } else {
+        // Regular User: Can only see active plans for a specific gym (Public view)
+        // If they try to list all plans without gymId, forbid.
+        if (!filterGymId) return sendBadRequest(res, 'gymId is required');
+        filterIsActive = true;
+      }
+    } else {
+      // Unauthenticated (Public): Must provide gymId, only active plans
+      if (!filterGymId) return sendBadRequest(res, 'gymId is required');
+      filterIsActive = true;
     }
 
-    // Note: This endpoint is public, allowing anyone to view plans for a gym.
-    // If plans should only be visible to owners/admins, this endpoint must also be secured.
+    const result = await planService.getAllPlans({
+      gymId: filterGymId,
+      isActive: filterIsActive,
+      search: search as string,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
 
-    logger.info(`Fetching plans for gymId: ${gymId}`);
-    const plans = await planService.getPlansByGym(gymId as string);
-
-    logger.info(`Found ${plans.length} plans for gymId: ${gymId}`);
-    return sendSuccess(res, plans);
+    return sendSuccess(res, result);
   } catch (error) {
     logger.error(`Error fetching plans: ${error}`);
     return sendInternalError(res, 'Failed to fetch plans');

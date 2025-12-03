@@ -74,42 +74,58 @@ export const getMySubscriptions = async (req: Request, res: Response) => {
   }
 };
 
-export const getGymSubscriptions = async (req: Request, res: Response) => {
+export const getAllSubscriptions = async (req: Request, res: Response) => {
   try {
-    const { gymId, page, limit, status } = req.query;
-    const userId = (req as any).user.id;
-    const userRoles = (req as any).user.roles || [];
+    const { gymId, userId, status, page, limit } = req.query;
+    const user = (req as any).user;
+    const userRoles = user.roles || [];
 
-    if (!gymId) {
-      return res.status(400).json({ message: 'gymId is required' });
+    let filterGymId: string | string[] | undefined = gymId as string;
+
+    if (userRoles.includes('ADMIN')) {
+      // Admin can filter freely
+    } else if (userRoles.includes('OWNER')) {
+      // Owner Logic
+      if (filterGymId) {
+        // Verify ownership
+        const gym = await prisma.gym.findUnique({
+          where: { id: filterGymId as string },
+          select: { ownerId: true }
+        });
+
+        if (!gym || gym.ownerId !== user.id) {
+          return res.status(403).json({ message: 'Not authorized to view subscriptions for this gym' });
+        }
+      } else {
+        // Fetch all gyms for owner
+        const myGyms = await prisma.gym.findMany({
+          where: { ownerId: user.id },
+          select: { id: true }
+        });
+
+        if (myGyms.length === 0) {
+          return res.status(200).json({
+            data: [],
+            meta: { total: 0, page: 1, limit: 10, totalPages: 0 }
+          });
+        }
+        filterGymId = myGyms.map(g => g.id);
+      }
+    } else {
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Verify ownership or admin status
-    const gym = await prisma.gym.findUnique({
-      where: { id: gymId as string },
-      select: { ownerId: true },
+    const result = await subscriptionService.getAllSubscriptions({
+      gymId: filterGymId,
+      userId: userId as string,
+      status: status as any,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
     });
-
-    if (!gym) {
-      return res.status(404).json({ message: 'Gym not found' });
-    }
-
-    const isAdmin = userRoles.includes('ADMIN');
-    const isOwner = gym.ownerId === userId;
-
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'You are not authorized to view subscriptions for this gym' });
-    }
-
-    const result = await subscriptionService.getSubscriptionsByGym(
-      gymId as string,
-      Number(page) || 1,
-      Number(limit) || 10,
-      status as any
-    );
 
     return res.status(200).json(result);
   } catch (error) {
+    console.error('Get subscriptions error:', error);
     return res.status(500).json({ message: 'Failed to fetch subscriptions' });
   }
 };

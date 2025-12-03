@@ -43,21 +43,33 @@ export const createGym: RequestHandler = async (req, res) => {
   }
 };
 
-// Get all gyms (No changes needed here)
+// Get all gyms
 export const getAllGyms: RequestHandler = async (req, res) => {
   const user = getAuthUser(req);
   logger.info('Fetching all gyms', { userId: user?.id });
   try {
-    const gyms = await gymService.getAllGyms();
+    const { ownerId, verified, page, limit } = req.query;
+
+    if (verified !== undefined && !user?.roles?.includes(Role.ADMIN)) {
+      return sendForbidden(res, 'Only admin can filter by verification status');
+    }
+
+    const result = await gymService.getAllGyms({
+      ownerId: ownerId as string,
+      verified: verified === 'true' ? true : verified === 'false' ? false : undefined,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
+
     logger.info('Successfully fetched all gyms');
-    return sendSuccess(res, gyms);
+    return sendSuccess(res, result);
   } catch (error) {
     logger.error(`Error fetching all gyms: ${error}`);
     return sendInternalError(res);
   }
 };
 
-// Get my gyms (No changes needed here)
+// Get my gyms
 export const getMyGyms: RequestHandler = async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
@@ -70,8 +82,7 @@ export const getMyGyms: RequestHandler = async (req, res) => {
     const userId = authReq.user.id;
     logger.info(`Fetching gyms owned by user: ${userId}`);
 
-    const allGyms = await gymService.getAllGyms();
-    const myGyms = allGyms.filter((gym) => gym.ownerId === userId);
+    const myGyms = await gymService.getGymsByOwner(userId);
 
     logger.info(`Successfully fetched ${myGyms.length} gyms for user: ${userId}`);
     return sendSuccess(res, myGyms);

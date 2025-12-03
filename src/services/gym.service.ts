@@ -43,18 +43,46 @@ export const gymService = {
   },
 
   // Get all gyms
-  async getAllGyms() {
-    return prisma.gym.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        owner: {
-          select: { id: true, name: true },
+  async getAllGyms(filters: {
+    ownerId?: string;
+    verified?: boolean;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const { ownerId, verified, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (ownerId) where.ownerId = ownerId;
+    if (verified !== undefined) where.verified = verified;
+
+    const [gyms, total] = await Promise.all([
+      prisma.gym.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          owner: {
+            select: { id: true, name: true },
+          },
+          _count: {
+            select: { subscriptions: true },
+          },
         },
-        _count: {
-          select: { subscriptions: true },
-        },
+        skip,
+        take: limit,
+      }),
+      prisma.gym.count({ where }),
+    ]);
+
+    return {
+      data: gyms,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   },
 
   // Get gym by ID

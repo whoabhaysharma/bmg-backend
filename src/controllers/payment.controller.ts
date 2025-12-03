@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { subscriptionService } from '../services';
 import { paymentService } from '../services/payment.service';
+import { PaymentStatus, SettlementStatus, SubscriptionSource } from '@prisma/client';
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
@@ -112,37 +113,46 @@ export const handleWebhook = async (req: Request, res: Response) => {
   }
 };
 
+import prisma from '../lib/prisma';
+
 export const getAllPayments = async (req: Request, res: Response) => {
   try {
     const { gymId, userId, source, status, settlementStatus, startDate, endDate, page, limit } = req.query;
     const user = (req as any).user;
     const userRoles = user.roles || [];
 
-    // Auth: Admin sees all (or filters). Owner sees theirs.
-    let filterGymId = gymId as string | undefined;
+    let filterGymId: string | string[] | undefined = gymId as string;
 
     if (userRoles.includes('ADMIN')) {
-      // Admin can filter freely
+      // Admin can filter freely. If gymId is provided, use it.
     } else if (userRoles.includes('OWNER')) {
-      // Owner must be restricted to their gyms
-      // If gymId provided, verify ownership
-      // If not provided, we should ideally fetch all their gyms.
-      // For now, let's assume Owner passes gymId or we restrict to "gymId required for Owner"
-      // or we fetch their gyms.
-      // Let's reuse the logic: if Owner, gymId is required OR we fetch their gyms.
-      // For simplicity in this iteration:
+      // Owner Logic
       if (filterGymId) {
-        // Verify
-        // We need prisma here to verify.
-        // Let's assume service handles it or we do it here.
-        // Ideally controller should verify ownership.
+        // Verify ownership of the specific gym
+        const gym = await prisma.gym.findUnique({
+          where: { id: filterGymId as string },
+          select: { ownerId: true }
+        });
+
+        if (!gym || gym.ownerId !== user.id) {
+          return res.status(403).json({ message: 'Not authorized to view payments for this gym' });
+        }
       } else {
-        // If no gymId, fetch all payments for this owner?
-        // This requires finding all gyms for owner.
-        // Let's skip complex ownership logic for "All Payments" for Owner for now, 
-        // and just say "gymId required" or let them see nothing if not provided.
-        // But wait, the requirement is "Admin needs to show payments".
-        // So this endpoint is primarily for Admin.
+        // No gymId provided, fetch ALL gyms owned by this user
+        const myGyms = await prisma.gym.findMany({
+          where: { ownerId: user.id },
+          select: { id: true }
+        });
+
+        if (myGyms.length === 0) {
+          // Owner has no gyms, so no payments
+          return res.status(200).json({
+            data: [],
+            meta: { total: 0, page: 1, limit: 10, totalPages: 0 }
+          });
+        }
+
+        filterGymId = myGyms.map(g => g.id);
       }
     } else {
       return res.status(403).json({ message: 'Not authorized' });

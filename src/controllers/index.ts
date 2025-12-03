@@ -8,3 +8,4 @@ export * from './plan.controller';
 export * from './subscription.controller';
 export * from './payment.controller';
 export * from './attendance.controller';
+export * from './notification.controller';

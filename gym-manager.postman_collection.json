@@ -158,7 +158,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users?page=1&limit=10",
+              "raw": "{{baseUrl}}/users?page=1&limit=10&search=&role=&includeDeleted=false",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -168,11 +168,28 @@
               "query": [
                 {
                   "key": "page",
-                  "value": "1"
+                  "value": "1",
+                  "description": "Page number"
                 },
                 {
                   "key": "limit",
-                  "value": "10"
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name or mobile number"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filter by role (USER, OWNER, ADMIN)"
+                },
+                {
+                  "key": "includeDeleted",
+                  "value": "false",
+                  "description": "Include soft-deleted users"
                 }
               ]
             }
@@ -395,12 +412,31 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/gyms",
+              "raw": "{{baseUrl}}/gyms?page=1&limit=10&ownerId=&verified=",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "gyms"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "ownerId",
+                  "value": ""
+                },
+                {
+                  "key": "verified",
+                  "value": "",
+                  "description": "true/false (Admin only)"
+                }
               ]
             }
           },
@@ -627,12 +663,12 @@
           "response": []
         },
         {
-          "name": "Get Plans By Gym",
+          "name": "Get All Plans",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/plans?gymId={{gymId}}",
+              "raw": "{{baseUrl}}/plans?gymId={{gymId}}&isActive=&search=&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -643,6 +679,22 @@
                 {
                   "key": "gymId",
                   "value": "{{gymId}}"
+                },
+                {
+                  "key": "isActive",
+                  "value": ""
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
                 }
               ]
             }
@@ -862,12 +914,12 @@
           "response": []
         },
         {
-          "name": "Get Gym Subscriptions",
+          "name": "Get All Subscriptions",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/subscriptions?gymId={{gymId}}&page=1&limit=10",
+              "raw": "{{baseUrl}}/subscriptions?gymId={{gymId}}&userId=&status=&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -878,6 +930,14 @@
                 {
                   "key": "gymId",
                   "value": "{{gymId}}"
+                },
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
                 },
                 {
                   "key": "page",
@@ -955,7 +1015,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/payments?page=1&limit=10",
+              "raw": "{{baseUrl}}/payments?page=1&limit=10&gymId=&userId=&source=&status=&settlementStatus=&startDate=&endDate=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -970,6 +1030,34 @@
                 {
                   "key": "limit",
                   "value": "10"
+                },
+                {
+                  "key": "gymId",
+                  "value": ""
+                },
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "source",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "settlementStatus",
+                  "value": ""
+                },
+                {
+                  "key": "startDate",
+                  "value": ""
+                },
+                {
+                  "key": "endDate",
+                  "value": ""
                 }
               ]
             }
@@ -982,18 +1070,43 @@
       "name": "Attendance",
       "item": [
         {
-          "name": "Get My Attendance",
+          "name": "Get All Attendance",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/attendance/me",
+              "raw": "{{baseUrl}}/attendance?gymId=&userId=&startDate=&endDate=&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "attendance",
-                "me"
+                "attendance"
+              ],
+              "query": [
+                {
+                  "key": "gymId",
+                  "value": ""
+                },
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "startDate",
+                  "value": ""
+                },
+                {
+                  "key": "endDate",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -1105,17 +1218,39 @@
       "name": "Notifications",
       "item": [
         {
-          "name": "Get My Notifications",
+          "name": "Get Notifications",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/notifications",
+              "raw": "{{baseUrl}}/notifications?userId=&type=&isRead=&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "notifications"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "key": "isRead",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -1201,7 +1336,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/settlements?gymId={{gymId}}",
+              "raw": "{{baseUrl}}/settlements?gymId={{gymId}}&status=&startDate=&endDate=&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1212,6 +1347,26 @@
                 {
                   "key": "gymId",
                   "value": "{{gymId}}"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "startDate",
+                  "value": ""
+                },
+                {
+                  "key": "endDate",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
                 }
               ]
             }

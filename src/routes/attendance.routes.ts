@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  getMyAttendance,
+  getAllAttendance,
   checkIn,
   checkOut,
   verifyCheckIn,
@@ -12,7 +12,7 @@ import { Role } from '@prisma/client';
 const router = Router();
 
 // User attendance routes
-router.get('/me', isAuthenticated, getMyAttendance);
+router.get('/', isAuthenticated, getAllAttendance);
 router.post('/gym/:gymId/check-in', isAuthenticated, checkIn);
 router.post('/:attendanceId/check-out', isAuthenticated, checkOut);
 

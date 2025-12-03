@@ -33,13 +33,31 @@ export const userService = {
     });
   },
 
-  // Get users paginated
-  async getAllUsers(page = 1, limit = 10, includeDeleted = false) {
+  // Get users paginated with filters
+  async getAllUsers(filters: {
+    page?: number;
+    limit?: number;
+    includeDeleted?: boolean;
+    search?: string;
+    role?: Role;
+  } = {}) {
+    const { page = 1, limit = 10, includeDeleted = false, search, role } = filters;
     const skip = (page - 1) * limit;
 
     const where: Prisma.UserWhereInput = includeDeleted
       ? {}
       : { deletedAt: null };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { mobileNumber: { contains: search } },
+      ];
+    }
+
+    if (role) {
+      where.roles = { has: role };
+    }
 
     const [users, total] = await prisma.$transaction([
       prisma.user.findMany({

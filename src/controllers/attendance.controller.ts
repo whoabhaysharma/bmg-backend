@@ -3,8 +3,10 @@ import { AuthenticatedRequest } from '../middleware';
 import { attendanceService } from '../services';
 import logger from '../lib/logger';
 
-// Get my attendance history
-export const getMyAttendance = async (
+import prisma from '../lib/prisma';
+
+// Get attendance history (Admin/Owner/User)
+export const getAllAttendance = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
@@ -15,23 +17,55 @@ export const getMyAttendance = async (
     });
   }
 
-  const { gymId } = req.query;
-  logger.info('Fetching attendance history', { userId: req.user.id, gymId });
+  const { gymId, userId, startDate, endDate, page, limit } = req.query;
+  const user = req.user;
+  const userRoles = user.roles || [];
+
+  let filterGymId: string | string[] | undefined = gymId as string;
+  let filterUserId: string | undefined = userId as string;
+
+  if (userRoles.includes('ADMIN')) {
+    // Admin: filter freely
+  } else if (userRoles.includes('OWNER')) {
+    // Owner: Restricted to owned gyms
+    if (filterGymId) {
+      const gym = await prisma.gym.findUnique({
+        where: { id: filterGymId as string },
+        select: { ownerId: true }
+      });
+      if (!gym || gym.ownerId !== user.id) {
+        return res.status(403).json({ success: false, error: 'Not authorized for this gym' });
+      }
+    } else {
+      // Fetch all owned gyms
+      const myGyms = await prisma.gym.findMany({
+        where: { ownerId: user.id },
+        select: { id: true }
+      });
+      if (myGyms.length === 0) {
+        return res.status(200).json({ success: true, data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } });
+      }
+      filterGymId = myGyms.map(g => g.id);
+    }
+  } else {
+    // Regular User: Can only see their own attendance
+    filterUserId = user.id;
+    // User can filter by gymId if they want, but only for themselves
+  }
 
   try {
-    const attendance = await attendanceService.getUserAttendance(
-      req.user.id,
-      gymId ? String(gymId) : undefined
-    );
-
-    logger.info('Successfully fetched attendance history', {
-      userId: req.user.id,
-      count: attendance.length,
+    const result = await attendanceService.getAllAttendanceLogs({
+      gymId: filterGymId,
+      userId: filterUserId,
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
     });
 
     return res.status(200).json({
       success: true,
-      data: attendance,
+      ...result,
       error: null,
     });
   } catch (error) {

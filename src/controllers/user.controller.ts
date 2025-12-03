@@ -59,8 +59,16 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const includeDeleted = req.query.includeDeleted === 'true';
+    const search = req.query.search as string;
+    const role = req.query.role as Role;
 
-    const result = await userService.getAllUsers(page, limit, includeDeleted);
+    const result = await userService.getAllUsers({
+      page,
+      limit,
+      includeDeleted,
+      search,
+      role,
+    });
     return sendSuccess(res, result);
   } catch (error) {
     return sendInternalError(res, 'Failed to fetch users');

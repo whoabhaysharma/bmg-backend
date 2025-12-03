@@ -92,9 +92,8 @@ export const createMagicLink = async (req: Request, res: Response) => {
     if (!phoneNumber) return sendBadRequest(res, 'Phone number is required');
 
     const token = await AuthService.generateMagicToken(phoneNumber);
-    // Assuming frontend is running on localhost:3000 for now, as per plan
-    // In production, this should be an env variable
-    const magicLink = `http://localhost:3000/booking?token=${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const magicLink = `${frontendUrl}/booking?token=${token}`;
 
     return sendSuccess(res, { magicLink });
   } catch (error) {

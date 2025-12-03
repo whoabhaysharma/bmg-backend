@@ -297,12 +297,31 @@ export const subscriptionService = {
     limit: number = 10,
     status?: SubscriptionStatus
   ) {
-    const skip = (page - 1) * limit;
-    const where: any = { gymId };
+    return this.getAllSubscriptions({ gymId, page, limit, status });
+  },
 
-    if (status) {
-      where.status = status;
+  // Generic Get All Subscriptions (Admin/Owner)
+  async getAllSubscriptions(filters: {
+    gymId?: string | string[];
+    userId?: string;
+    status?: SubscriptionStatus;
+    page?: number;
+    limit?: number;
+  }) {
+    const { gymId, userId, status, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (gymId) {
+      if (Array.isArray(gymId)) {
+        where.gymId = { in: gymId };
+      } else {
+        where.gymId = gymId;
+      }
     }
+
+    if (userId) where.userId = userId;
+    if (status) where.status = status;
 
     const [subscriptions, total] = await Promise.all([
       prisma.subscription.findMany({
@@ -323,6 +342,11 @@ export const subscriptionService = {
               durationUnit: true,
             },
           },
+          gym: {
+            select: {
+              name: true
+            }
+          }
         },
         skip,
         take: limit,

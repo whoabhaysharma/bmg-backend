@@ -17,13 +17,57 @@ function calculateDuration(checkIn: Date, checkOut: Date): string {
 }
 
 export const attendanceService = {
-  async getAllAttendanceLogs() {
-    return prisma.attendance.findMany({
-      include: {
-        user: true,
-        gym: true,
+  async getAllAttendanceLogs(filters: {
+    gymId?: string | string[];
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const { gymId, userId, startDate, endDate, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (gymId) {
+      if (Array.isArray(gymId)) {
+        where.gymId = { in: gymId };
+      } else {
+        where.gymId = gymId;
+      }
+    }
+
+    if (userId) where.userId = userId;
+
+    if (startDate || endDate) {
+      where.checkIn = {};
+      if (startDate) where.checkIn.gte = startDate;
+      if (endDate) where.checkIn.lte = endDate;
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.attendance.findMany({
+        where,
+        include: {
+          user: { select: { name: true, mobileNumber: true } },
+          gym: { select: { name: true } },
+        },
+        skip,
+        take: limit,
+        orderBy: { checkIn: 'desc' },
+      }),
+      prisma.attendance.count({ where }),
+    ]);
+
+    return {
+      data: logs,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   },
 
   async getAttendanceById(id: string) {

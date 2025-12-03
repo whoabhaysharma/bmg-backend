@@ -91,19 +91,57 @@ export const settlementService = {
     },
 
     // Get Settlements
-    async getSettlements(gymId?: string, status?: SettlementStatus) {
+    async getSettlements(filters: {
+        gymId?: string | string[];
+        status?: SettlementStatus;
+        startDate?: Date;
+        endDate?: Date;
+        page?: number;
+        limit?: number;
+    } = {}) {
+        const { gymId, status, startDate, endDate, page = 1, limit = 10 } = filters;
+        const skip = (page - 1) * limit;
         const where: any = {};
-        if (gymId) where.gymId = gymId;
+
+        if (gymId) {
+            if (Array.isArray(gymId)) {
+                where.gymId = { in: gymId };
+            } else {
+                where.gymId = gymId;
+            }
+        }
+
         if (status) where.status = status;
 
-        return prisma.settlement.findMany({
-            where,
-            include: {
-                gym: { select: { name: true, owner: { select: { name: true, mobileNumber: true } } } },
-                _count: { select: { payments: true } },
+        if (startDate || endDate) {
+            where.createdAt = {};
+            if (startDate) where.createdAt.gte = startDate;
+            if (endDate) where.createdAt.lte = endDate;
+        }
+
+        const [settlements, total] = await Promise.all([
+            prisma.settlement.findMany({
+                where,
+                include: {
+                    gym: { select: { name: true, owner: { select: { name: true, mobileNumber: true } } } },
+                    _count: { select: { payments: true } },
+                },
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+            }),
+            prisma.settlement.count({ where }),
+        ]);
+
+        return {
+            data: settlements,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
             },
-            orderBy: { createdAt: 'desc' },
-        });
+        };
     },
 
     // Get Single Settlement

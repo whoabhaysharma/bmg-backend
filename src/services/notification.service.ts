@@ -92,19 +92,34 @@ export const notificationService = {
     },
 
     /**
-     * Get user notifications with pagination
+     * Get notifications with filters
      */
-    async getUserNotifications(userId: string, page = 1, limit = 50) {
+    async getNotifications(filters: {
+        userId?: string;
+        type?: NotificationType;
+        isRead?: boolean;
+        page?: number;
+        limit?: number;
+    } = {}) {
+        const { userId, type, isRead, page = 1, limit = 50 } = filters;
         const skip = (page - 1) * limit;
+        const where: any = {};
+
+        if (userId) where.userId = userId;
+        if (type) where.type = type;
+        if (isRead !== undefined) where.isRead = isRead;
 
         const [notifications, total] = await Promise.all([
             prisma.notification.findMany({
-                where: { userId },
+                where,
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
+                include: {
+                    user: { select: { name: true, mobileNumber: true } }
+                }
             }),
-            prisma.notification.count({ where: { userId } }),
+            prisma.notification.count({ where }),
         ]);
 
         return {
@@ -114,7 +129,8 @@ export const notificationService = {
                 page,
                 limit,
                 totalPages: Math.ceil(total / limit),
-                unreadCount: await this.getUnreadCount(userId),
+                // unreadCount is specific to a user, so only return if userId is filtered
+                unreadCount: userId ? await this.getUnreadCount(userId) : undefined,
             },
         };
     },

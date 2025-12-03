@@ -141,7 +141,7 @@ export const paymentService = {
 
   // Get All Payments (Admin/Owner view)
   async getAllPayments(filters: {
-    gymId?: string;
+    gymId?: string | string[];
     userId?: string;
     source?: 'ONLINE' | 'MANUAL'; // Derived from SubscriptionSource
     status?: string; // PaymentStatus
@@ -167,7 +167,13 @@ export const paymentService = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
-    if (gymId) where.subscription = { ...where.subscription, gymId };
+    if (gymId) {
+      if (Array.isArray(gymId)) {
+        where.subscription = { ...where.subscription, gymId: { in: gymId } };
+      } else {
+        where.subscription = { ...where.subscription, gymId };
+      }
+    }
     if (userId) where.subscription = { ...where.subscription, userId };
 
     if (source) {

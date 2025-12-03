@@ -16,7 +16,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"mobileNumber\": \"+919876543210\"\n}",
+              "raw": "{\n    \"phoneNumber\": \"9876543210\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -44,9 +44,12 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.token) {",
-                  "    pm.environment.set(\"authToken\", jsonData.token);",
-                  "    console.log(\"Token set:\", jsonData.token);",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"authToken\", jsonData.data.token);",
+                  "    console.log(\"Token set:\", jsonData.data.token);",
+                  "}",
+                  "if (jsonData.data && jsonData.data.user) {",
+                  "    pm.environment.set(\"userId\", jsonData.data.user.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -58,7 +61,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"mobileNumber\": \"+919876543210\",\n    \"otp\": \"123456\"\n}",
+              "raw": "{\n    \"phoneNumber\": \"9876543210\",\n    \"otp\": \"123456\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -109,7 +112,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\"\n}",
+              "raw": "{\n    \"name\": \"Updated Name\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -155,12 +158,22 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users",
+              "raw": "{{baseUrl}}/users?page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -183,7 +196,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{userId}}"
                 }
               ]
             }
@@ -197,7 +210,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Admin Updated\"\n}",
+              "raw": "{\n    \"name\": \"Admin Updated User\",\n    \"roles\": [\"USER\", \"ADMIN\"]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -216,7 +229,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{userId}}"
                 }
               ]
             }
@@ -240,7 +253,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{userId}}"
                 }
               ]
             }
@@ -265,7 +278,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{userId}}"
                 }
               ]
             }
@@ -299,7 +312,32 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Extended Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "profile"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "me"
                 }
               ]
             }
@@ -313,12 +351,26 @@
       "item": [
         {
           "name": "Create Gym",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set(\"gymId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"My Gym\",\n    \"address\": \"123 Gym St\",\n    \"description\": \"Best gym ever\"\n}",
+              "raw": "{\n    \"name\": \"My Gym\",\n    \"address\": \"123 Gym St\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -404,37 +456,13 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Gym Name\"\n}",
+              "raw": "{\n    \"name\": \"Updated Gym Name\",\n    \"address\": \"456 New Address\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "url": {
-              "raw": "{{baseUrl}}/gyms/:id",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "gyms",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{gymId}}"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Gym",
-          "request": {
-            "method": "DELETE",
-            "header": [],
             "url": {
               "raw": "{{baseUrl}}/gyms/:id",
               "host": [
@@ -528,6 +556,30 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Delete Gym",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/gyms/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gyms",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -536,12 +588,26 @@
       "item": [
         {
           "name": "Create Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set(\"planId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Gold Plan\",\n    \"price\": 1000,\n    \"duration\": 30,\n    \"description\": \"Access to all equipment\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "raw": "{\n    \"gymId\": \"{{gymId}}\",\n    \"name\": \"Gold Plan\",\n    \"description\": \"Access to all equipment\",\n    \"durationValue\": 1,\n    \"durationUnit\": \"MONTH\",\n    \"price\": 1000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -584,7 +650,7 @@
           "response": []
         },
         {
-          "name": "Get Active Plans",
+          "name": "Get Active Plans By Gym",
           "request": {
             "method": "GET",
             "header": [],
@@ -638,7 +704,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Plan Name\"\n}",
+              "raw": "{\n    \"name\": \"Updated Gold Plan\",\n    \"price\": 1200,\n    \"isActive\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -694,13 +760,30 @@
       "name": "Subscriptions",
       "item": [
         {
-          "name": "Create Subscription (App)",
+          "name": "Create Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.subscription && jsonData.data.subscription.id) {",
+                  "    pm.environment.set(\"subscriptionId\", jsonData.data.subscription.id);",
+                  "}",
+                  "if (jsonData.data && jsonData.data.orderId) {",
+                  "    pm.environment.set(\"razorpayOrderId\", jsonData.data.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\",\n    \"source\": \"APP\"\n}",
+              "raw": "{\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -721,12 +804,26 @@
         },
         {
           "name": "Create Console Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set(\"subscriptionId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userId\": \"USER_ID_HERE\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\",\n    \"startDate\": \"2023-01-01\",\n    \"paymentMode\": \"CASH\",\n    \"amountPaid\": 1000\n}",
+              "raw": "{\n    \"name\": \"New Member\",\n    \"mobileNumber\": \"9876543211\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -770,7 +867,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/subscriptions?gymId={{gymId}}",
+              "raw": "{{baseUrl}}/subscriptions?gymId={{gymId}}&page=1&limit=10",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -781,6 +878,14 @@
                 {
                   "key": "gymId",
                   "value": "{{gymId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
                 }
               ]
             }
@@ -788,7 +893,7 @@
           "response": []
         },
         {
-          "name": "Activate Subscription",
+          "name": "Activate Subscription (Manual)",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -805,7 +910,66 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "{{subscriptionId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"razorpay_order_id\": \"{{razorpayOrderId}}\",\n    \"razorpay_payment_id\": \"pay_dummy_id\",\n    \"razorpay_signature\": \"dummy_signature\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
                 }
               ]
             }
@@ -818,19 +982,42 @@
       "name": "Attendance",
       "item": [
         {
+          "name": "Get My Attendance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Check In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set(\"attendanceId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"location\": {\n        \"lat\": 12.9716,\n        \"lng\": 77.5946\n    }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
               "raw": "{{baseUrl}}/attendance/gym/:gymId/check-in",
               "host": [
@@ -870,7 +1057,7 @@
               "variable": [
                 {
                   "key": "attendanceId",
-                  "value": ""
+                  "value": "{{attendanceId}}"
                 }
               ]
             }
@@ -884,7 +1071,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userId\": \"USER_ID\",\n    \"checkInTime\": \"2023-01-01T10:00:00Z\"\n}",
+              "raw": "{\n    \"accessCode\": \"123456\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -907,164 +1094,6 @@
                   "key": "gymId",
                   "value": "{{gymId}}"
                 }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get My Attendance",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/attendance/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "attendance",
-                "me"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payments",
-      "item": [
-        {
-          "name": "Verify Payment",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"razorpay_order_id\": \"order_123\",\n    \"razorpay_payment_id\": \"pay_123\",\n    \"razorpay_signature\": \"sig_123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/payments/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "payments",
-                "verify"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Payments",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/payments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "payments"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Settlements",
-      "item": [
-        {
-          "name": "Create Settlement (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"gymId\": \"{{gymId}}\",\n    \"amount\": 500\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/settlements",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settlements"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Process Settlement (Admin)",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/settlements/:id/process",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settlements",
-                ":id",
-                "process"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Settlements",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/settlements",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settlements"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Unsettled Amount",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/settlements/unsettled",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "settlements",
-                "unsettled"
               ]
             }
           },
@@ -1093,7 +1122,7 @@
           "response": []
         },
         {
-          "name": "Mark Read",
+          "name": "Mark Notification Read",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -1110,7 +1139,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "notification_id"
                 }
               ]
             }
@@ -1138,16 +1167,16 @@
       ]
     },
     {
-      "name": "API Keys",
+      "name": "Settlements",
       "item": [
         {
-          "name": "Create API Key",
+          "name": "Create Settlement (Admin)",
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Test Key\",\n    \"scopes\": [\"read\", \"write\"]\n}",
+              "raw": "{\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1155,52 +1184,34 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api-keys",
+              "raw": "{{baseUrl}}/settlements",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api-keys"
+                "settlements"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get All API Keys",
+          "name": "Get Settlements",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api-keys",
+              "raw": "{{baseUrl}}/settlements?gymId={{gymId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api-keys"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete API Key",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api-keys/:id",
-              "host": [
-                "{{baseUrl}}"
+                "settlements"
               ],
-              "path": [
-                "api-keys",
-                ":id"
-              ],
-              "variable": [
+              "query": [
                 {
-                  "key": "id",
-                  "value": ""
+                  "key": "gymId",
+                  "value": "{{gymId}}"
                 }
               ]
             }
@@ -1208,24 +1219,81 @@
           "response": []
         },
         {
-          "name": "Toggle API Key Status",
+          "name": "Get Unsettled Amount",
           "request": {
-            "method": "PATCH",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api-keys/:id/status",
+              "raw": "{{baseUrl}}/settlements/unsettled?gymId={{gymId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "api-keys",
-                ":id",
-                "status"
+                "settlements",
+                "unsettled"
+              ],
+              "query": [
+                {
+                  "key": "gymId",
+                  "value": "{{gymId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Settlement By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settlements/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements",
+                ":id"
               ],
               "variable": [
                 {
                   "key": "id",
-                  "value": ""
+                  "value": "settlement_id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Process Settlement (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionId\": \"txn_123456\",\n    \"notes\": \"Processed via bank transfer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/settlements/:id/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "settlements",
+                ":id",
+                "process"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "settlement_id"
                 }
               ]
             }
@@ -1249,7 +1317,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/whatsapp/user?mobile=+919876543210",
+              "raw": "{{baseUrl}}/whatsapp/user?mobile=9876543210",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1260,7 +1328,7 @@
               "query": [
                 {
                   "key": "mobile",
-                  "value": "+919876543210"
+                  "value": "9876543210"
                 }
               ]
             }
@@ -1334,7 +1402,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"mobile\": \"+919876543210\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "raw": "{\n    \"mobile\": \"9876543210\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1366,7 +1434,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/whatsapp/subscription?mobile=+919876543210",
+              "raw": "{{baseUrl}}/whatsapp/subscription?mobile=9876543210",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1377,7 +1445,113 @@
               "query": [
                 {
                   "key": "mobile",
-                  "value": "+919876543210"
+                  "value": "9876543210"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "API Keys",
+      "item": [
+        {
+          "name": "Create API Key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"My API Key\",\n    \"key\": \"some-secure-key-value\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle API Key Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api-keys/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "api_key_id"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "api_key_id"
                 }
               ]
             }
@@ -1420,11 +1594,16 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api",
+      "value": "http://localhost:8000/api/v1",
       "type": "string"
     },
     {
       "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
       "value": "",
       "type": "string"
     },
@@ -1439,8 +1618,23 @@
       "type": "string"
     },
     {
+      "key": "subscriptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attendanceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpayOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "whatsappSecret",
-      "value": "your_secret_here",
+      "value": "your-secret-here",
       "type": "string"
     }
   ]

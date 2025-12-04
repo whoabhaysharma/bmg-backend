@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { subscriptionService } from '../services';
 import { paymentService } from '../services/payment.service';
-import { PaymentStatus, SettlementStatus, SubscriptionSource } from '@prisma/client';
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {

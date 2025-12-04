@@ -2,17 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { PrismaClient } from '@prisma/client';
 import routes from './routes';
-
-// Initialize Prisma Client
-export const prisma = new PrismaClient();
 
 const app = express();
 
 // Middleware
 app.use(express.json({
-    verify: (req: any, res, buf) => {
+    verify: (req: any, _res, buf) => {
         req.rawBody = buf;
     }
 }));

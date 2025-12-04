@@ -1,11 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from './isAuthenticated';
 import logger from '../lib/logger';
 
-const prisma = new PrismaClient();
-
 export const apiAuth = async (req: Request, res: Response, next: NextFunction) => {
+    // 1. Check for Internal Shared Secret (Fastest, No DB)
+    const internalSecretHeader = req.headers['x-internal-secret'];
+    const internalSecret = Array.isArray(internalSecretHeader) ? internalSecretHeader[0] : internalSecretHeader;
+
+    if (internalSecret && internalSecret === process.env.INTERNAL_SECRET) {
+        // Grant internal access
+        (req as AuthenticatedRequest).user = {
+            id: 'INTERNAL_SERVICE',
+            name: 'Internal Service',
+            email: 'internal@system.local',
+            roles: ['ADMIN'], // Internal services are trusted as Admin
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            mobileNumber: null,
+            deletedAt: null
+        } as any;
+        return next();
+    }
+
+    // 2. Fallback to Database API Key
     const apiKeyHeader = req.headers['x-api-key'];
     const apiKey = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
 
@@ -36,8 +54,8 @@ export const apiAuth = async (req: Request, res: Response, next: NextFunction) =
 
         logger.info(`API Access granted for key: ${validKey.name}`);
         return next();
-    } catch (error) {
+    } catch (error: any) {
         logger.error('API Key validation error:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 };

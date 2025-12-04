@@ -218,8 +218,9 @@ export const subscriptionService = {
       throw new Error('PAYMENT_RECORD_NOT_FOUND');
     }
 
-    // Already completed (test checks this)
+    // Already completed (idempotency check)
     if (payment.status === PaymentStatus.COMPLETED) {
+      console.log('Payment already completed, skipping processing:', payment.id);
       return prisma.subscription.findUnique({
         where: { id: payment.subscription.id },
       });

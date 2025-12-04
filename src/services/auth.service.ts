@@ -21,14 +21,19 @@ export const AuthService = {
   },
 
   async findOrCreateUser(phoneNumber: string): Promise<User> {
+    let normalizedMobile = String(phoneNumber);
+    if (normalizedMobile.startsWith('91') && normalizedMobile.length === 12) {
+      normalizedMobile = normalizedMobile.substring(2);
+    }
+
     let user = await prisma.user.findUnique({
-      where: { mobileNumber: String(phoneNumber) },
+      where: { mobileNumber: normalizedMobile },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          mobileNumber: String(phoneNumber),
+          mobileNumber: normalizedMobile,
           name: '', // Placeholder, user should update profile
         },
       });

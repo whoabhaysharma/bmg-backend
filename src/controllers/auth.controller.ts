@@ -21,7 +21,14 @@ export const sendOtp = async (
     }
 
     // --- FIX: Add phone number format validation ---
-    if (!PHONE_NUMBER_REGEX.test(phoneNumber)) {
+    // Normalize: Strip '91' prefix if present
+    if (phoneNumber.startsWith('91') && phoneNumber.length === 12) {
+      req.body.phoneNumber = phoneNumber.substring(2);
+    }
+
+    const normalizedPhoneNumber = req.body.phoneNumber;
+
+    if (!PHONE_NUMBER_REGEX.test(normalizedPhoneNumber)) {
       return sendBadRequest(res, 'Invalid phone number format. Must be 10 digits.');
     }
     // ---------------------------------------------
@@ -88,8 +95,13 @@ export const verifyOtp = async (
 
 export const createMagicLink = async (req: Request, res: Response) => {
   try {
-    const { phoneNumber } = req.body;
+    let { phoneNumber } = req.body;
     if (!phoneNumber) return sendBadRequest(res, 'Phone number is required');
+
+    // Normalize: Strip '91' prefix if present
+    if (phoneNumber.startsWith('91') && phoneNumber.length === 12) {
+      phoneNumber = phoneNumber.substring(2);
+    }
 
     const token = await AuthService.generateMagicToken(phoneNumber);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';

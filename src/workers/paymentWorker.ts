@@ -10,7 +10,7 @@ export const paymentWorker = new Worker(
         const event = job.data;
 
         try {
-            if (event.event === 'payment.captured' || event.event === 'order.paid' || event.event === 'payment.authorized') {
+            if (event.event === 'payment.captured') {
                 const paymentEntity = event.payload.payment.entity;
                 const orderId = paymentEntity.order_id;
                 const paymentId = paymentEntity.id;

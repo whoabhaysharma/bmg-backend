@@ -5,7 +5,7 @@ import { User } from '@prisma/client';
 export const AuthService = {
   async generateOtp(phoneNumber: string): Promise<string> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await redis.set(`otp:${phoneNumber}`, otp, { ex: 300 }); // OTP expires in 5 minutes
+    await redis.set(`otp:${phoneNumber}`, otp, 'EX', 300); // OTP expires in 5 minutes
     return otp;
   },
 
@@ -38,7 +38,7 @@ export const AuthService = {
 
   async generateMagicToken(phoneNumber: string): Promise<string> {
     const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    await redis.set(`magic_token:${token}`, phoneNumber, { ex: 900 }); // Expires in 15 minutes
+    await redis.set(`magic_token:${token}`, phoneNumber, 'EX', 900); // Expires in 15 minutes
     return token;
   },
 

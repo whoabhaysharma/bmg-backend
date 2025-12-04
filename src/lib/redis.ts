@@ -1,11 +1,8 @@
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import logger from './logger';
 
-if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    logger.warn('UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be defined in .env file');
+if (!process.env.REDIS_URL) {
+    logger.warn('REDIS_URL is not defined in .env file, using default redis://localhost:6379');
 }
 
-export const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');

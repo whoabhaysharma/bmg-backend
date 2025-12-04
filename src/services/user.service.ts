@@ -10,7 +10,7 @@ export const userService = {
     const user = await prisma.user.create({ data });
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       user.id,
       NotificationEvent.USER_CREATED,
       { userName: user.name }
@@ -91,7 +91,7 @@ export const userService = {
     invalidateUserCache(id);
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       id,
       NotificationEvent.USER_UPDATED,
       { userName: updatedUser.name }
@@ -114,7 +114,7 @@ export const userService = {
     invalidateUserCache(id);
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       id,
       NotificationEvent.USER_DELETED,
       { userName: user.name }
@@ -134,7 +134,7 @@ export const userService = {
     invalidateUserCache(id);
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       id,
       NotificationEvent.USER_RESTORED,
       { userName: restoredUser.name }
@@ -161,7 +161,7 @@ export const userService = {
     invalidateUserCache(userId);
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       userId,
       NotificationEvent.USER_ROLE_ADDED,
       { userName: user.name, role }
@@ -190,7 +190,7 @@ export const userService = {
     invalidateUserCache(userId);
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       userId,
       NotificationEvent.USER_ROLE_REMOVED,
       { userName: user.name, role }

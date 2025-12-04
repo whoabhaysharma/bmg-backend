@@ -11,6 +11,7 @@ model User {
   id            String    @id @default(cuid())
   name          String
   mobileNumber  String?   @unique
+  email         String?   @unique
   roles         Role[]    @default([USER])
   gymsOwned     Gym[]          @relation("GymOwner")
   subscriptions Subscription[]
@@ -234,6 +235,7 @@ model ApiKey {
   key         String   @unique
   name        String?
   isActive    Boolean  @default(true)
+  role        Role     @default(USER)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

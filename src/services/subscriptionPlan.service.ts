@@ -119,7 +119,7 @@ export const planService = {
     });
 
     // ✅ New event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       plan.gym.ownerId,
       NotificationEvent.PLAN_CREATED,
       {
@@ -155,7 +155,7 @@ export const planService = {
     });
 
     // ✅ Notify owner about plan update
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       plan.gym.ownerId,
       NotificationEvent.PLAN_UPDATED,
       {
@@ -166,7 +166,7 @@ export const planService = {
 
     // ✅ Notify about activation/deactivation if status changed
     if (data.isActive !== undefined) {
-      await notificationService.notifyUser(
+      notificationService.notifyUser(
         plan.gym.ownerId,
         data.isActive ? NotificationEvent.PLAN_ACTIVATED : NotificationEvent.PLAN_DEACTIVATED,
         {
@@ -200,7 +200,7 @@ export const planService = {
     });
 
     // ✅ Notify owner about plan deletion
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       plan.gym.ownerId,
       NotificationEvent.PLAN_DELETED,
       {

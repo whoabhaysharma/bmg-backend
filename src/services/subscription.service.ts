@@ -3,6 +3,7 @@ import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 import { randomUUID } from 'crypto';
+import { notificationQueue } from '../queues/notificationQueue';
 
 const prisma = new PrismaClient();
 const ACCESS_CODE_LENGTH = 8;
@@ -127,7 +128,7 @@ export const subscriptionService = {
     });
 
     // ✅ Event-based notification - Subscription Created
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       userId,
       NotificationEvent.SUBSCRIPTION_CREATED,
       {
@@ -138,7 +139,7 @@ export const subscriptionService = {
     );
 
     // ✅ Event-based notification - Payment Initiated
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       userId,
       NotificationEvent.PAYMENT_INITIATED,
       {
@@ -255,7 +256,7 @@ export const subscriptionService = {
     });
 
     // ✅ Event-based notification - Payment Completed
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       payment.subscription.userId,
       NotificationEvent.PAYMENT_COMPLETED,
       {
@@ -266,7 +267,7 @@ export const subscriptionService = {
     );
 
     // ✅ Event-based notification - Subscription Activated (User)
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       payment.subscription.userId,
       NotificationEvent.SUBSCRIPTION_ACTIVATED,
       {
@@ -280,28 +281,24 @@ export const subscriptionService = {
     try {
       const user = payment.subscription.user;
       if (user.mobileNumber) {
-        await fetch(`${process.env.WHATSAPP_WEBHOOK_URL}/internal/access-code`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-internal-secret': process.env.WHATSAPP_BACKEND_SECRET || ''
-          },
-          body: JSON.stringify({
+        notificationQueue.add('send-whatsapp', {
+          type: 'WHATSAPP_ACCESS_CODE',
+          payload: {
             mobile: user.mobileNumber,
             accessCode: fullSubscription?.accessCode,
             gymName: payment.subscription.gym.name,
             planName: payment.subscription.plan.name,
             endDate: endDate
-          })
+          }
         });
       }
     } catch (error) {
-      console.error('Failed to send WhatsApp notification:', error);
+      console.error('Failed to queue WhatsApp notification:', error);
       // Don't block the flow
     }
 
     // ✅ Event-based notification - New Subscription (Gym Owner)
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       payment.subscription.gym.ownerId,
       NotificationEvent.SUBSCRIPTION_CREATED,
       {
@@ -440,7 +437,7 @@ export const subscriptionService = {
     }
 
     // ✅ Event-based notification - Subscription Activated
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       subscription.userId,
       NotificationEvent.SUBSCRIPTION_ACTIVATED,
       {
@@ -514,7 +511,7 @@ export const subscriptionService = {
     });
 
     // ✅ Event-based notification - Subscription Activated (User)
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       userId,
       NotificationEvent.SUBSCRIPTION_ACTIVATED,
       {
@@ -526,7 +523,7 @@ export const subscriptionService = {
 
     // ✅ Event-based notification - New Member Added (Gym Owner)
     if (gym.ownerId) {
-      await notificationService.notifyUser(
+      notificationService.notifyUser(
         gym.ownerId,
         NotificationEvent.MEMBER_ADDED,
         {

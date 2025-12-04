@@ -6,7 +6,8 @@ import logger from '../lib/logger';
 const prisma = new PrismaClient();
 
 export const apiAuth = async (req: Request, res: Response, next: NextFunction) => {
-    const apiKey = req.headers['x-api-key'] as string;
+    const apiKeyHeader = req.headers['x-api-key'];
+    const apiKey = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
 
     if (!apiKey) {
         return next(); // Continue to other auth methods if no key
@@ -21,12 +22,12 @@ export const apiAuth = async (req: Request, res: Response, next: NextFunction) =
             return res.status(401).json({ message: 'Invalid API Key' });
         }
 
-        // Attach a mock admin user for compatibility
+        // Attach user with role from API Key
         (req as AuthenticatedRequest).user = {
-            id: 'API_ADMIN',
+            id: 'API_USER', // Or validKey.id
             name: validKey.name || 'API User',
             email: 'api@system.local',
-            roles: ['ADMIN'],
+            roles: [validKey.role], // Use the role from the database
             createdAt: new Date(),
             updatedAt: new Date(),
             mobileNumber: null,

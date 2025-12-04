@@ -128,7 +128,7 @@ export const paymentService = {
     });
 
     // ✅ Event-based notification - Payment Failed
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       payment.subscription.userId,
       NotificationEvent.PAYMENT_FAILED,
       {

@@ -33,7 +33,7 @@ export const gymService = {
     });
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       gym.ownerId,
       status ? NotificationEvent.GYM_VERIFIED : NotificationEvent.GYM_UNVERIFIED,
       { gymName: gym.name }
@@ -119,7 +119,7 @@ export const gymService = {
     });
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       gym.ownerId,
       NotificationEvent.GYM_CREATED,
       { gymName: gym.name }
@@ -144,7 +144,7 @@ export const gymService = {
     });
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       gym.ownerId,
       NotificationEvent.GYM_UPDATED,
       { gymName: gym.name }
@@ -185,7 +185,7 @@ export const gymService = {
     });
 
     // ✅ Event-based notification
-    await notificationService.notifyUser(
+    notificationService.notifyUser(
       gym.ownerId,
       NotificationEvent.GYM_DELETED,
       { gymName: gym.name }

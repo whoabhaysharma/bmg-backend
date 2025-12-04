@@ -77,7 +77,7 @@ export const settlementService = {
             });
 
             // ✅ Event-based notification - Settlement Created
-            await notificationService.notifyUser(
+            notificationService.notifyUser(
                 settlement.gym.ownerId,
                 NotificationEvent.SETTLEMENT_CREATED,
                 {
@@ -184,7 +184,7 @@ export const settlementService = {
         });
 
         // ✅ Event-based notification - Settlement Processed
-        await notificationService.notifyUser(
+        notificationService.notifyUser(
             settlement.gym.ownerId,
             NotificationEvent.SETTLEMENT_PROCESSED,
             {

@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
-import { subscriptionService } from '../services';
+// import { subscriptionService } from '../services';
 import { paymentService } from '../services/payment.service';
+import { addPaymentEventToQueue } from '../queues/paymentQueue';
+import prisma from '../lib/prisma';
 
+/*
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
     const {
@@ -56,6 +59,8 @@ export const verifyPayment = async (req: Request, res: Response) => {
       .json({ message: error.message || 'Payment verification failed' });
   }
 };
+*/
+
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
@@ -82,28 +87,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
     const event = req.body;
     console.log('Webhook Event:', event.event);
 
-    if (event.event === 'payment.captured' || event.event === 'order.paid' || event.event === 'payment.authorized') {
-      const paymentEntity = event.payload.payment.entity;
-      console.log('Payment Entity:', JSON.stringify(paymentEntity, null, 2));
-
-      const orderId = paymentEntity.order_id;
-      const paymentId = paymentEntity.id;
-      const notes = paymentEntity.notes;
-      const subscriptionId = notes?.subscriptionId;
-
-      console.log('Extracted Data:', { orderId, paymentId, notes, subscriptionId });
-
-      // We don't have the frontend signature here, but we have verified the webhook signature.
-      // We can pass a placeholder or modify handlePaymentSuccess to accept trusted calls.
-      // For now, let's pass 'WEBHOOK_VERIFIED' as signature.
-
-      await subscriptionService.handlePaymentSuccess(
-        orderId,
-        paymentId,
-        'WEBHOOK_VERIFIED',
-        subscriptionId
-      );
-    }
+    // Add to queue for asynchronous processing
+    await addPaymentEventToQueue(event);
+    console.log('Payment event added to queue');
 
     return res.status(200).json({ status: 'ok' });
   } catch (error: any) {
@@ -111,8 +97,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Webhook processing failed' });
   }
 };
-
-import prisma from '../lib/prisma';
 
 export const getAllPayments = async (req: Request, res: Response) => {
   try {

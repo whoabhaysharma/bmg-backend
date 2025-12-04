@@ -276,6 +276,30 @@ export const subscriptionService = {
       }
     );
 
+    // ✅ Send WhatsApp Notification with Access Code
+    try {
+      const user = payment.subscription.user;
+      if (user.mobileNumber) {
+        await fetch(`${process.env.WHATSAPP_WEBHOOK_URL}/internal/access-code`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-secret': process.env.WHATSAPP_BACKEND_SECRET || ''
+          },
+          body: JSON.stringify({
+            mobile: user.mobileNumber,
+            accessCode: fullSubscription?.accessCode,
+            gymName: payment.subscription.gym.name,
+            planName: payment.subscription.plan.name,
+            endDate: endDate
+          })
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send WhatsApp notification:', error);
+      // Don't block the flow
+    }
+
     // ✅ Event-based notification - New Subscription (Gym Owner)
     await notificationService.notifyUser(
       payment.subscription.gym.ownerId,

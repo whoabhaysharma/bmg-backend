@@ -16,7 +16,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"phoneNumber\": \"9876543210\"\n}",
+              "raw": "{\n    \"phoneNumber\": \"{{phoneNumber}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -61,7 +61,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"phoneNumber\": \"9876543210\",\n    \"otp\": \"123456\"\n}",
+              "raw": "{\n    \"phoneNumber\": \"{{phoneNumber}}\",\n    \"otp\": \"{{otp}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -112,7 +112,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Name\"\n}",
+              "raw": "{\n    \"name\": \"{{userName}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -227,7 +227,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Admin Updated User\",\n    \"roles\": [\"USER\", \"ADMIN\"]\n}",
+              "raw": "{\n    \"name\": \"{{userName}}\",\n    \"roles\": [\"USER\", \"ADMIN\"]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -309,7 +309,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"role\": \"ADMIN\",\n    \"action\": \"add\"\n}",
+              "raw": "{\n    \"role\": \"{{role}}\",\n    \"action\": \"add\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -387,7 +387,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"My Gym\",\n    \"address\": \"123 Gym St\"\n}",
+              "raw": "{\n    \"name\": \"{{gymName}}\",\n    \"address\": \"{{gymAddress}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -492,7 +492,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Gym Name\",\n    \"address\": \"456 New Address\"\n}",
+              "raw": "{\n    \"name\": \"{{gymName}}\",\n    \"address\": \"{{gymAddress}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -643,7 +643,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"gymId\": \"{{gymId}}\",\n    \"name\": \"Gold Plan\",\n    \"description\": \"Access to all equipment\",\n    \"durationValue\": 1,\n    \"durationUnit\": \"MONTH\",\n    \"price\": 1000\n}",
+              "raw": "{\n    \"gymId\": \"{{gymId}}\",\n    \"name\": \"{{planName}}\",\n    \"description\": \"{{planDescription}}\",\n    \"durationValue\": {{planDurationValue}},\n    \"durationUnit\": \"{{planDurationUnit}}\",\n    \"price\": {{planPrice}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -756,7 +756,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Gold Plan\",\n    \"price\": 1200,\n    \"isActive\": true\n}",
+              "raw": "{\n    \"name\": \"{{planName}}\",\n    \"price\": {{planPrice}},\n    \"isActive\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -875,7 +875,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"New Member\",\n    \"mobileNumber\": \"9876543211\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "raw": "{\n    \"name\": \"{{memberName}}\",\n    \"mobileNumber\": \"{{memberMobile}}\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1184,7 +1184,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"accessCode\": \"123456\"\n}",
+              "raw": "{\n    \"accessCode\": \"{{accessCode}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1428,7 +1428,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"transactionId\": \"txn_123456\",\n    \"notes\": \"Processed via bank transfer\"\n}",
+              "raw": "{\n    \"transactionId\": \"{{transactionId}}\",\n    \"notes\": \"{{settlementNotes}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1472,7 +1472,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/whatsapp/user?mobile=9876543210",
+              "raw": "{{baseUrl}}/whatsapp/user?mobile={{phoneNumber}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1483,7 +1483,7 @@
               "query": [
                 {
                   "key": "mobile",
-                  "value": "9876543210"
+                  "value": "{{phoneNumber}}"
                 }
               ]
             }
@@ -1557,7 +1557,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"mobile\": \"9876543210\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "raw": "{\n    \"mobile\": \"{{phoneNumber}}\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1589,7 +1589,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/whatsapp/subscription?mobile=9876543210",
+              "raw": "{{baseUrl}}/whatsapp/subscription?mobile={{phoneNumber}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1619,7 +1619,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"My API Key\",\n    \"key\": \"some-secure-key-value\"\n}",
+              "raw": "{\n    \"name\": \"{{apiKeyName}}\",\n    \"key\": \"{{apiKeyValue}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1662,7 +1662,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"isActive\": false\n}",
+              "raw": "{\n    \"isActive\": {{apiKeyIsActive}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1682,7 +1682,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "api_key_id"
+                  "value": "{{apiKeyId}}"
                 }
               ]
             }
@@ -1706,7 +1706,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "api_key_id"
+                  "value": "{{apiKeyId}}"
                 }
               ]
             }
@@ -1790,6 +1790,106 @@
     {
       "key": "whatsappSecret",
       "value": "your-secret-here",
+      "type": "string"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gymName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gymAddress",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planDescription",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planDurationValue",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planDurationUnit",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planPrice",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberMobile",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transactionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "settlementNotes",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKeyName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKeyValue",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKeyIsActive",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiKeyId",
+      "value": "",
       "type": "string"
     }
   ]

@@ -23,7 +23,7 @@ router.use('/users', apiAuth, userRoutes);
 router.use('/gyms', apiAuth, gymRoutes);
 router.use('/plans', apiAuth, planRoutes);
 router.use('/subscriptions', apiAuth, subscriptionRoutes);
-router.use('/payments', apiAuth, paymentRoutes);
+router.use('/payments', paymentRoutes);
 router.use('/attendance', apiAuth, attendanceRoutes);
 router.use('/notifications', apiAuth, notificationRoutes);
 router.use('/settlements', apiAuth, settlementRoutes);

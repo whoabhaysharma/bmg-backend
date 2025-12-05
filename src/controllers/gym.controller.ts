@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware';
 import logger from '../lib/logger';
 import { getAuthUser } from '../utils/getAuthUser';
 import { gymService } from '../services'
+import { auditLogService } from '../services/auditLog.service';
 import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError } from '../utils/response';
 import { Role } from '@prisma/client';
 
@@ -33,6 +34,14 @@ export const createGym: RequestHandler = async (req, res) => {
       name,
       address,
       ownerId: finalOwnerId,
+    });
+
+    await auditLogService.createAuditLog({
+      action: 'GYM_CREATED',
+      details: `Created gym "${gym.name}" (ID: ${gym.id})`,
+      userId: user.id,
+      userName: user.name,
+      gymId: gym.id,
     });
 
     logger.info(`Successfully created gym with id: ${gym.id}`);
@@ -146,6 +155,14 @@ export const updateGym: RequestHandler = async (req, res) => {
 
     const updatedGym = await gymService.updateGym(id, { name, address });
 
+    await auditLogService.createAuditLog({
+      action: 'GYM_UPDATED',
+      details: `Updated gym "${updatedGym.name}" (ID: ${updatedGym.id})`,
+      userId: user.id,
+      userName: user.name,
+      gymId: updatedGym.id,
+    });
+
     logger.info(`Successfully updated gym with id: ${id}`);
     return sendSuccess(res, updatedGym);
   } catch (error) {
@@ -186,6 +203,14 @@ export const deleteGym: RequestHandler = async (req, res) => {
 
     await gymService.deleteGym(id);
 
+    await auditLogService.createAuditLog({
+      action: 'GYM_DELETED',
+      details: `Deleted gym "${gym.name}" (ID: ${id})`,
+      userId: user.id,
+      userName: user.name,
+      gymId: id,
+    });
+
     logger.info(`Successfully deleted gym with id: ${id}`);
     return sendSuccess(res, null, 204);
   } catch (error) {
@@ -212,6 +237,15 @@ export const verifyGym: RequestHandler = async (req, res) => {
       return sendNotFound(res, 'Gym not found');
     }
     const updatedGym = await gymService.setGymVerified(id, true);
+
+    await auditLogService.createAuditLog({
+      action: 'GYM_VERIFIED',
+      details: `Verified gym "${updatedGym.name}" (ID: ${id})`,
+      userId: user.id,
+      userName: user.name,
+      gymId: id,
+    });
+
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error verifying gym with id: ${id}: ${error}`);
@@ -237,6 +271,15 @@ export const unverifyGym: RequestHandler = async (req, res) => {
       return sendNotFound(res, 'Gym not found');
     }
     const updatedGym = await gymService.setGymVerified(id, false);
+
+    await auditLogService.createAuditLog({
+      action: 'GYM_UNVERIFIED',
+      details: `Unverified gym "${updatedGym.name}" (ID: ${id})`,
+      userId: user.id,
+      userName: user.name,
+      gymId: id,
+    });
+
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error unverifying gym with id: ${id}: ${error}`);

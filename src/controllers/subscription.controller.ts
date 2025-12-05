@@ -1,13 +1,15 @@
 import { Request, Response } from 'express';
 import { subscriptionService, userService } from '../services';
 import { PrismaClient } from '@prisma/client';
+import { auditLogService } from '../services/auditLog.service';
 
 const prisma = new PrismaClient();
 
 export const createSubscription = async (req: Request, res: Response) => {
   try {
     const { planId, gymId } = req.body;
-    const userId = (req as any).user.id;
+    const user = (req as any).user;
+    const userId = user.id;
 
     // --- Validation (tests expect EXACT messages) ---
     if (!planId) {
@@ -22,6 +24,14 @@ export const createSubscription = async (req: Request, res: Response) => {
       planId,
       gymId
     );
+
+    await auditLogService.createAuditLog({
+      action: 'SUBSCRIPTION_INITIATED',
+      details: `Initiated subscription for plan ID: ${planId} at gym ID: ${gymId}`,
+      userId: userId,
+      userName: user.name,
+      gymId: gymId,
+    });
 
     return res.status(201).json({
       message: 'Subscription created and payment order generated',
@@ -133,8 +143,9 @@ export const getAllSubscriptions = async (req: Request, res: Response) => {
 export const manualActivateSubscription = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
-    const userRoles = (req as any).user.roles || [];
+    const user = (req as any).user;
+    const userId = user.id;
+    const userRoles = user.roles || [];
 
     // 1. Check if subscription exists
     const subscription = await prisma.subscription.findUnique({
@@ -157,6 +168,14 @@ export const manualActivateSubscription = async (req: Request, res: Response) =>
     // 3. Activate
     const result = await subscriptionService.manualActivateSubscription(id);
 
+    await auditLogService.createAuditLog({
+      action: 'SUBSCRIPTION_ACTIVATED_MANUALLY',
+      details: `Manually activated subscription (ID: ${id})`,
+      userId: userId,
+      userName: user.name,
+      gymId: subscription.gymId,
+    });
+
     return res.status(200).json({
       message: 'Subscription activated successfully',
       data: result,
@@ -171,8 +190,9 @@ export const manualActivateSubscription = async (req: Request, res: Response) =>
 export const createConsoleSubscription = async (req: Request, res: Response) => {
   try {
     const { userId: providedMemberId, name, mobileNumber, planId, gymId } = req.body;
-    const requesterId = (req as any).user.id;
-    const userRoles = (req as any).user.roles || [];
+    const user = (req as any).user;
+    const requesterId = user.id;
+    const userRoles = user.roles || [];
 
     if (!planId || !gymId) {
       return res.status(400).json({ message: 'planId and gymId are required' });
@@ -217,6 +237,14 @@ export const createConsoleSubscription = async (req: Request, res: Response) => 
     }
 
     const result = await subscriptionService.createConsoleSubscription(memberId, planId, gymId);
+
+    await auditLogService.createAuditLog({
+      action: 'CONSOLE_SUBSCRIPTION_CREATED',
+      details: `Created console subscription for member (ID: ${memberId}) at gym (ID: ${gymId})`,
+      userId: requesterId,
+      userName: user.name,
+      gymId: gymId,
+    });
 
     return res.status(201).json({
       message: 'Subscription created successfully',

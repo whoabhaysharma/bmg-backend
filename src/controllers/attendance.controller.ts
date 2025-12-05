@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware';
 import { attendanceService } from '../services';
 import logger from '../lib/logger';
+import { auditLogService } from '../services/auditLog.service';
 
 import prisma from '../lib/prisma';
 
@@ -97,6 +98,16 @@ export const checkIn = async (
     // Create attendance record
     const attendance = await attendanceService.checkIn(req.user.id, gymId);
 
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'CHECK_IN',
+        details: `User checked in at gym (ID: ${gymId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: gymId,
+      });
+    }
+
     logger.info('Successfully checked in', {
       userId: req.user.id,
       gymId,
@@ -149,6 +160,16 @@ export const checkOut = async (
   try {
     // Update attendance record with check out time
     const updatedAttendance = await attendanceService.checkOut(req.user.id, attendanceId);
+
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'CHECK_OUT',
+        details: `User checked out (Attendance ID: ${attendanceId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: updatedAttendance.gymId,
+      });
+    }
 
     logger.info('Successfully checked out', {
       userId: req.user.id,
@@ -210,6 +231,16 @@ export const verifyCheckIn = async (
 
   try {
     const attendance = await attendanceService.verifyAndCheckIn(accessCode, gymId);
+
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'CHECK_IN_VERIFIED',
+        details: `Verified check-in for user (ID: ${attendance.userId}) at gym (ID: ${gymId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: gymId,
+      });
+    }
 
     logger.info('Successfully verified and checked in', {
       userId: attendance.userId,

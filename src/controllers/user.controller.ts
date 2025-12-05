@@ -4,6 +4,7 @@ import { Role } from '@prisma/client';
 
 import { AuthenticatedRequest } from '../middleware';
 import { getAuthUser } from '../utils/getAuthUser';
+import { auditLogService } from '../services/auditLog.service';
 import { sendSuccess, sendUnauthorized, sendForbidden, sendNotFound, sendInternalError, sendBadRequest } from '../utils/response';
 
 export const getMyProfile = async (req: Request, res: Response) => {
@@ -24,6 +25,14 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   try {
     const updateData = { name: req.body.name }; // Only allow updating the name
     const updatedUser = await userService.updateUser(user.id, updateData);
+
+    await auditLogService.createAuditLog({
+      action: 'PROFILE_UPDATED',
+      details: `User updated their profile`,
+      userId: user.id,
+      userName: user.name,
+    });
+
     return sendSuccess(res, updatedUser);
   } catch (error) {
     return sendBadRequest(res, 'Failed to update profile');
@@ -128,6 +137,14 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     const updatedUser = await userService.updateUser(id, updateData);
+
+    await auditLogService.createAuditLog({
+      action: 'USER_UPDATED',
+      details: `Updated user "${updatedUser.name}" (ID: ${id})`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+    });
+
     return sendSuccess(res, updatedUser);
   } catch (error) {
     return sendBadRequest(res, 'Failed to update user');
@@ -152,6 +169,14 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     await userService.deleteUser(id);
+
+    await auditLogService.createAuditLog({
+      action: 'USER_DELETED',
+      details: `Deleted user (ID: ${id})`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+    });
+
     return sendSuccess(res, { message: 'User deleted successfully' });
   } catch (error) {
     return sendBadRequest(res, 'Failed to delete user');
@@ -171,6 +196,14 @@ export const restoreUser = async (req: AuthenticatedRequest, res: Response) => {
 
     const { id } = req.params;
     const user = await userService.restoreUser(id);
+
+    await auditLogService.createAuditLog({
+      action: 'USER_RESTORED',
+      details: `Restored user "${user.name}" (ID: ${id})`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+    });
+
     return sendSuccess(res, user);
   } catch (error) {
     return sendBadRequest(res, 'Failed to restore user');
@@ -207,6 +240,13 @@ export const addRole = async (req: AuthenticatedRequest, res: Response) => {
     } else if (action === 'remove') {
       updatedUser = await userService.removeRole(id, role);
     }
+
+    await auditLogService.createAuditLog({
+      action: 'ROLE_UPDATED',
+      details: `${action === 'add' ? 'Added' : 'Removed'} role "${role}" for user "${user.name}"`,
+      userId: currentUser.id,
+      userName: currentUser.name,
+    });
 
     return sendSuccess(res, updatedUser);
   } catch (error: any) {
@@ -257,6 +297,14 @@ export const upgradeToOwner = async (req: AuthenticatedRequest, res: Response) =
     }
 
     const updatedUser = await userService.addRole(user.id, Role.OWNER);
+
+    await auditLogService.createAuditLog({
+      action: 'UPGRADED_TO_OWNER',
+      details: `User upgraded themselves to Owner`,
+      userId: user.id,
+      userName: user.name,
+    });
+
     return sendSuccess(res, updatedUser);
   } catch (error) {
     return sendInternalError(res, 'Failed to upgrade to owner');

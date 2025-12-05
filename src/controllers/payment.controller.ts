@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 // import { subscriptionService } from '../services';
 import { paymentService } from '../services/payment.service';
 import { addPaymentEventToQueue } from '../queues/paymentQueue';
+import { auditLogService } from '../services/auditLog.service';
 import prisma from '../lib/prisma';
 
 /*
@@ -90,6 +91,14 @@ export const handleWebhook = async (req: Request, res: Response) => {
     // Add to queue for asynchronous processing
     await addPaymentEventToQueue(event);
     console.log('Payment event added to queue');
+
+    // Audit log for system event
+    await auditLogService.createAuditLog({
+      action: 'PAYMENT_WEBHOOK_RECEIVED',
+      details: `Received Razorpay webhook event: ${event.event}`,
+      userId: 'system',
+      userName: 'System (Razorpay Webhook)',
+    });
 
     return res.status(200).json({ status: 'ok' });
   } catch (error: any) {

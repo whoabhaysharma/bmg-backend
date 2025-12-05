@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
 import { gymService, planService } from '../services';
+import { auditLogService } from '../services/auditLog.service';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
 import { Role } from '@prisma/client';
 import prisma from '../lib/prisma';
@@ -58,6 +59,16 @@ export const createPlan = async (
       durationUnit,
       price,
     });
+
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'PLAN_CREATED',
+        details: `Created plan "${plan.name}" for gym "${gym.name}" (ID: ${gymId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: gymId,
+      });
+    }
 
     logger.info(`Plan created successfully: ${plan.id}`);
     return sendSuccess(res, plan, 201);
@@ -238,6 +249,16 @@ export const updatePlan = async (
 
     const updatedPlan = await planService.updatePlan(planId, updateData);
 
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'PLAN_UPDATED',
+        details: `Updated plan "${updatedPlan.name}" (ID: ${planId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: plan.gymId,
+      });
+    }
+
     logger.info(`Plan updated successfully: ${planId}`);
     return sendSuccess(res, updatedPlan);
   } catch (error) {
@@ -284,6 +305,16 @@ export const deletePlan = async (
 
     logger.info(`Deleting plan: ${planId}`);
     await planService.deletePlan(planId);
+
+    if (req.user) {
+      await auditLogService.createAuditLog({
+        action: 'PLAN_DELETED',
+        details: `Deleted plan "${plan.name}" (ID: ${planId})`,
+        userId: req.user.id,
+        userName: req.user.name,
+        gymId: plan.gymId,
+      });
+    }
 
     logger.info(`Plan deleted successfully: ${planId}`);
     // Standard practice for a successful DELETE operation is 204 No Content

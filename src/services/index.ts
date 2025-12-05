@@ -1,4 +1,5 @@
 export * from './attendance.service';
+export * from './admin.service';
 export * from './auth.service';
 export * from './gym.service';
 export * from './payment.service';

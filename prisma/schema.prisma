@@ -239,3 +239,13 @@ model ApiKey {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String
+  userId    String
+  userName  String
+  gymId     String?
+  createdAt DateTime @default(now())
+}

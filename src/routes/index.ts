@@ -9,6 +9,8 @@ import attendanceRoutes from './attendance.routes';
 import notificationRoutes from './notification.routes';
 import settlementRoutes from './settlement.routes';
 import apiKeyRoutes from './apiKey.routes';
+import adminRoutes from './admin.routes';
+import auditLogRoutes from './auditLog.routes';
 
 import { apiAuth } from '../middleware';
 
@@ -26,6 +28,8 @@ router.use('/payments', paymentRoutes);
 router.use('/attendance', apiAuth, attendanceRoutes);
 router.use('/notifications', apiAuth, notificationRoutes);
 router.use('/settlements', apiAuth, settlementRoutes);
+router.use('/admin', apiAuth, adminRoutes);
+router.use('/audit-logs', apiAuth, auditLogRoutes);
 
 router.use('/api-keys', apiKeyRoutes);
 

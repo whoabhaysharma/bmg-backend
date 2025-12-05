@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import { settlementService } from '../services';
 import { SettlementStatus } from '@prisma/client';
+import { auditLogService } from '../services/auditLog.service';
+import { getAuthUser } from '../utils/getAuthUser';
 
 import prisma from '../lib/prisma';
 
 export const createSettlement = async (req: Request, res: Response) => {
     try {
         const { gymId } = req.body;
+        const user = getAuthUser(req);
 
         // Only Admin can create settlements (initiate payout calculation)
         // Or maybe Owner requests it? Usually Admin runs it.
@@ -17,6 +20,16 @@ export const createSettlement = async (req: Request, res: Response) => {
         }
 
         const settlement = await settlementService.createSettlement(gymId);
+
+        if (user) {
+            await auditLogService.createAuditLog({
+                action: 'SETTLEMENT_CREATED',
+                details: `Created settlement for gym (ID: ${gymId}) with amount ${settlement.amount}`,
+                userId: user.id,
+                userName: user.name,
+                gymId: gymId,
+            });
+        }
 
         return res.status(201).json({
             message: 'Settlement created successfully',
@@ -114,6 +127,7 @@ export const processSettlement = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { transactionId, notes } = req.body;
+        const user = getAuthUser(req);
 
         // Only Admin can process
         // Middleware should handle role check, but double check here if needed.
@@ -123,6 +137,16 @@ export const processSettlement = async (req: Request, res: Response) => {
         }
 
         const updated = await settlementService.processSettlement(id, transactionId, notes);
+
+        if (user) {
+            await auditLogService.createAuditLog({
+                action: 'SETTLEMENT_PROCESSED',
+                details: `Processed settlement (ID: ${id}) with Transaction ID: ${transactionId}`,
+                userId: user.id,
+                userName: user.name,
+                gymId: updated.gymId,
+            });
+        }
 
         return res.status(200).json({
             message: 'Settlement processed successfully',

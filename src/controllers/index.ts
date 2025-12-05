@@ -1,3 +1,4 @@
+export * from './admin.controller';
 export * from './auth.controller';
 export * from './apiKey.controller';
 export * from './user.controller';

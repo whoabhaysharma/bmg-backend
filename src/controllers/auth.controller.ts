@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
 import { AuthService } from '../services';
+import { auditLogService } from '../services/auditLog.service';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
 // Simple validation regex for 10 digits. This should ideally be moved to a constants/util file.
@@ -77,6 +78,13 @@ export const verifyOtp = async (
       { expiresIn: '7d' }
     );
 
+    await auditLogService.createAuditLog({
+      action: 'USER_LOGIN',
+      details: `User logged in via OTP`,
+      userId: user.id,
+      userName: user.name,
+    });
+
     sendSuccess(res, {
       message: 'OTP verified successfully',
       token,
@@ -131,6 +139,13 @@ export const loginWithMagicLink = async (req: Request, res: Response) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    await auditLogService.createAuditLog({
+      action: 'USER_LOGIN_MAGIC_LINK',
+      details: `User logged in via Magic Link`,
+      userId: user.id,
+      userName: user.name,
+    });
 
     return sendSuccess(res, {
       token: jwtToken,

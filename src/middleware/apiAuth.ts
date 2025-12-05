@@ -20,6 +20,7 @@ export const apiAuth = async (req: Request, res: Response, next: NextFunction) =
             mobileNumber: null,
             deletedAt: null
         } as any;
+        console.log('API Auth: Internal Access Granted');
         return next();
     }
 

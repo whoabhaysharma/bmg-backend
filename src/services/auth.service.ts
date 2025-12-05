@@ -5,18 +5,24 @@ import { User } from '@prisma/client';
 export const AuthService = {
   async generateOtp(phoneNumber: string): Promise<string> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(`Setting OTP for ${phoneNumber}: ${otp}`);
     await redis.set(`otp:${phoneNumber}`, otp, 'EX', 300); // OTP expires in 5 minutes
+    console.log(`OTP set in Redis for ${phoneNumber}`);
     return otp;
   },
 
   async verifyOtp(phoneNumber: string, otp: string): Promise<boolean> {
     const storedOtp = await redis.get(`otp:${phoneNumber}`);
-    console.log('Stored OTP:', storedOtp);
-    console.log('Provided OTP:', otp);
-    if (storedOtp === otp) {
+    console.log(`Verifying OTP for ${phoneNumber}`);
+    console.log('Stored OTP (Redis):', JSON.stringify(storedOtp));
+    console.log('Provided OTP (Input):', JSON.stringify(otp));
+    // Ensure both are strings for comparison
+    if (storedOtp && String(storedOtp) === String(otp)) {
       await redis.del(`otp:${phoneNumber}`); // Remove OTP after successful verification
+      console.log(`OTP verified and removed for ${phoneNumber}`);
       return true;
     }
+    console.log(`OTP verification failed for ${phoneNumber}`);
     return false;
   },
 

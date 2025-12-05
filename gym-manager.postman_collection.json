@@ -1466,8 +1466,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "x-whatsapp-secret",
-                "value": "{{whatsappSecret}}",
+                "key": "x-internal-secret",
+                "value": "{{internalSecret}}",
                 "type": "text"
               }
             ],
@@ -1496,8 +1496,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "x-whatsapp-secret",
-                "value": "{{whatsappSecret}}",
+                "key": "x-internal-secret",
+                "value": "{{internalSecret}}",
                 "type": "text"
               }
             ],
@@ -1520,8 +1520,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "x-whatsapp-secret",
-                "value": "{{whatsappSecret}}",
+                "key": "x-internal-secret",
+                "value": "{{internalSecret}}",
                 "type": "text"
               }
             ],
@@ -1550,8 +1550,8 @@
             "method": "POST",
             "header": [
               {
-                "key": "x-whatsapp-secret",
-                "value": "{{whatsappSecret}}",
+                "key": "x-internal-secret",
+                "value": "{{internalSecret}}",
                 "type": "text"
               }
             ],
@@ -1583,8 +1583,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "x-whatsapp-secret",
-                "value": "{{whatsappSecret}}",
+                "key": "x-internal-secret",
+                "value": "{{internalSecret}}",
                 "type": "text"
               }
             ],
@@ -1788,8 +1788,8 @@
       "type": "string"
     },
     {
-      "key": "whatsappSecret",
-      "value": "your-secret-here",
+      "key": "internalSecret",
+      "value": "your-internal-secret-here",
       "type": "string"
     },
     {

@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import * as whatsappController from '../controllers/whatsapp.controller';
-import { verifySecret } from '../middleware';
+import { apiAuth, isAuthenticated, isAdmin } from '../middleware';
 
 const router = Router();
 
-// Public routes (secured by secret)
-router.use(verifySecret);
+// Public routes (secured by secret or Admin token)
+router.use(apiAuth, isAuthenticated, isAdmin);
 router.get('/user', whatsappController.checkUser);
 router.get('/gyms', whatsappController.getGyms);
 router.get('/plans', whatsappController.getPlans);

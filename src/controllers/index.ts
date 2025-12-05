@@ -1,5 +1,4 @@
 export * from './auth.controller';
-export * from './whatsapp.controller';
 export * from './apiKey.controller';
 export * from './user.controller';
 export * from './settlement.controller';

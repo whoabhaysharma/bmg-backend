@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import app from './app';
 import { initializeAdmin } from './lib/initializeAdmin';
 import './workers/paymentWorker'; // Initialize worker
+import { initAuditWorker } from './workers/audit.worker';
 
 config();
 
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 const startServer = async () => {
   try {
     await initializeAdmin();
+    initAuditWorker();
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

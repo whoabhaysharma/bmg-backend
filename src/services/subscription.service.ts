@@ -4,6 +4,7 @@ import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 import { randomUUID } from 'crypto';
 import { notificationQueue } from '../queues/notificationQueue';
+import { logAction } from './audit.service';
 
 const prisma = new PrismaClient();
 const ACCESS_CODE_LENGTH = 8;
@@ -147,6 +148,15 @@ export const subscriptionService = {
         planName: plan.name
       }
     );
+
+    await logAction({
+      action: 'CREATE_SUBSCRIPTION',
+      entity: 'Subscription',
+      entityId: subscription.id,
+      actorId: userId,
+      gymId: gymId,
+      details: { planId, source }
+    });
 
     return { subscription, order };
   },
@@ -389,7 +399,7 @@ export const subscriptionService = {
   },
 
   // Manual Activation (Admin/Owner)
-  async manualActivateSubscription(subscriptionId: string) {
+  async manualActivateSubscription(subscriptionId: string, actorId?: string) {
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
       include: {
@@ -448,11 +458,22 @@ export const subscriptionService = {
       }
     );
 
+    if (actorId) {
+       await logAction({
+        action: 'ACTIVATE_SUBSCRIPTION',
+        entity: 'Subscription',
+        entityId: subscriptionId,
+        actorId: actorId,
+        gymId: subscription.gymId,
+        details: { method: 'MANUAL' }
+      });
+    }
+
     return updatedSubscription;
   },
 
   // Create subscription via Console (Owner/Admin) - Auto Active
-  async createConsoleSubscription(userId: string, planId: string, gymId: string) {
+  async createConsoleSubscription(userId: string, planId: string, gymId: string, actorId?: string) {
     const plan = await prisma.gymSubscriptionPlan.findUnique({
       where: { id: planId },
     });
@@ -533,6 +554,17 @@ export const subscriptionService = {
           gymName: gym.name
         }
       );
+    }
+
+    if (actorId) {
+      await logAction({
+        action: 'CREATE_SUBSCRIPTION_CONSOLE',
+        entity: 'Subscription',
+        entityId: subscription.id,
+        actorId: actorId,
+        gymId: gymId,
+        details: { planId, source: SubscriptionSource.CONSOLE, forUserId: userId }
+      });
     }
 
     return subscription;

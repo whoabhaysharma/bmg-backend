@@ -155,7 +155,7 @@ export const manualActivateSubscription = async (req: Request, res: Response) =>
     }
 
     // 3. Activate
-    const result = await subscriptionService.manualActivateSubscription(id);
+    const result = await subscriptionService.manualActivateSubscription(id, userId);
 
     return res.status(200).json({
       message: 'Subscription activated successfully',
@@ -216,7 +216,7 @@ export const createConsoleSubscription = async (req: Request, res: Response) => 
       }
     }
 
-    const result = await subscriptionService.createConsoleSubscription(memberId, planId, gymId);
+    const result = await subscriptionService.createConsoleSubscription(memberId, planId, gymId, requesterId);
 
     return res.status(201).json({
       message: 'Subscription created successfully',

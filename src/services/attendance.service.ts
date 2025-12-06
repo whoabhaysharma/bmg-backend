@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
+import { logAction } from './audit.service';
 
 const prisma = new PrismaClient();
 
@@ -145,6 +146,15 @@ export const attendanceService = {
       }
     );
 
+    await logAction({
+      action: 'CHECK_IN',
+      entity: 'Attendance',
+      entityId: attendance.id,
+      actorId: userId,
+      gymId: gymId,
+      details: { checkInTime: attendance.checkIn }
+    });
+
     return attendance;
   },
 
@@ -188,6 +198,15 @@ export const attendanceService = {
         duration: calculateDuration(attendance.checkIn, checkOutTime)
       }
     );
+
+    await logAction({
+      action: 'CHECK_OUT',
+      entity: 'Attendance',
+      entityId: updatedAttendance.id,
+      actorId: userId,
+      gymId: updatedAttendance.gymId,
+      details: { checkOutTime: updatedAttendance.checkOut }
+    });
 
     return updatedAttendance;
   },
@@ -277,6 +296,15 @@ export const attendanceService = {
         time: attendance.checkIn
       }
     );
+
+    await logAction({
+      action: 'VERIFY_AND_CHECK_IN',
+      entity: 'Attendance',
+      entityId: attendance.id,
+      actorId: subscription.userId,
+      gymId: gymId,
+      details: { checkInTime: attendance.checkIn, method: 'ACCESS_CODE' }
+    });
 
     return attendance;
   },

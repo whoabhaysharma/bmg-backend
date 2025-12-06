@@ -1,6 +1,7 @@
 import { redis } from '../lib/redis';
 import prisma from '../lib/prisma';
 import { User } from '@prisma/client';
+import { logAction } from './audit.service';
 
 export const AuthService = {
   async generateOtp(phoneNumber: string): Promise<string> {
@@ -42,6 +43,23 @@ export const AuthService = {
           mobileNumber: normalizedMobile,
           name: '', // Placeholder, user should update profile
         },
+      });
+      // New User
+      await logAction({
+        action: 'REGISTER',
+        entity: 'User',
+        entityId: user.id,
+        actorId: user.id,
+        details: { mobileNumber: normalizedMobile, method: 'OTP' }
+      });
+    } else {
+      // Existing User - Login
+      await logAction({
+        action: 'LOGIN',
+        entity: 'User',
+        entityId: user.id,
+        actorId: user.id,
+        details: { mobileNumber: normalizedMobile, method: 'OTP' }
       });
     }
     return user;

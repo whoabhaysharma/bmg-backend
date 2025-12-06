@@ -2,6 +2,7 @@ import prisma from '../lib/prisma';
 import { PlanType } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
+import { logAction } from './audit.service';
 
 export const planService = {
   // Get all plans (admin/owner)
@@ -129,6 +130,15 @@ export const planService = {
       }
     );
 
+    await logAction({
+      action: 'CREATE_PLAN',
+      entity: 'GymSubscriptionPlan',
+      entityId: plan.id,
+      actorId: plan.gym.ownerId, // Assuming owner/admin action
+      gymId: plan.gymId,
+      details: { name: plan.name, price: plan.price }
+    });
+
     return plan;
   },
 
@@ -142,7 +152,8 @@ export const planService = {
       isActive: boolean;
       durationValue: number;
       durationUnit: PlanType;
-    }>
+    }>,
+    actorId?: string
   ) {
     const plan = await prisma.gymSubscriptionPlan.update({
       where: { id },
@@ -176,11 +187,22 @@ export const planService = {
       );
     }
 
+    if (actorId) {
+      await logAction({
+        action: 'UPDATE_PLAN',
+        entity: 'GymSubscriptionPlan',
+        entityId: plan.id,
+        actorId: actorId,
+        gymId: plan.gymId,
+        details: data
+      });
+    }
+
     return plan;
   },
 
   // Delete plan
-  async deletePlan(id: string) {
+  async deletePlan(id: string, actorId?: string) {
     // Get plan details before deletion for notification
     const plan = await prisma.gymSubscriptionPlan.findUnique({
       where: { id },
@@ -208,6 +230,17 @@ export const planService = {
         gymName: plan.gym.name
       }
     );
+
+    if (actorId) {
+       await logAction({
+        action: 'DELETE_PLAN',
+        entity: 'GymSubscriptionPlan',
+        entityId: id,
+        actorId: actorId,
+        gymId: plan.gymId,
+        details: { name: plan.name }
+      });
+    }
 
     return deleted;
   },

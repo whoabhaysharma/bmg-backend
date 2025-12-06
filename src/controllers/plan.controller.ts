@@ -236,7 +236,7 @@ export const updatePlan = async (
       updateData.durationUnit = durationUnit;
     }
 
-    const updatedPlan = await planService.updatePlan(planId, updateData);
+    const updatedPlan = await planService.updatePlan(planId, updateData, userId);
 
     logger.info(`Plan updated successfully: ${planId}`);
     return sendSuccess(res, updatedPlan);
@@ -283,7 +283,7 @@ export const deletePlan = async (
     }
 
     logger.info(`Deleting plan: ${planId}`);
-    await planService.deletePlan(planId);
+    await planService.deletePlan(planId, userId);
 
     logger.info(`Plan deleted successfully: ${planId}`);
     // Standard practice for a successful DELETE operation is 204 No Content

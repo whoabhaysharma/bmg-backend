@@ -144,7 +144,7 @@ export const updateGym: RequestHandler = async (req, res) => {
       return sendForbidden(res, 'You are not authorized to update this gym');
     }
 
-    const updatedGym = await gymService.updateGym(id, { name, address });
+    const updatedGym = await gymService.updateGym(id, { name, address }, userId);
 
     logger.info(`Successfully updated gym with id: ${id}`);
     return sendSuccess(res, updatedGym);
@@ -184,7 +184,7 @@ export const deleteGym: RequestHandler = async (req, res) => {
       return sendForbidden(res, 'You are not authorized to delete this gym');
     }
 
-    await gymService.deleteGym(id);
+    await gymService.deleteGym(id, ownerId);
 
     logger.info(`Successfully deleted gym with id: ${id}`);
     return sendSuccess(res, null, 204);
@@ -211,7 +211,7 @@ export const verifyGym: RequestHandler = async (req, res) => {
     if (!gym) {
       return sendNotFound(res, 'Gym not found');
     }
-    const updatedGym = await gymService.setGymVerified(id, true);
+    const updatedGym = await gymService.setGymVerified(id, true, user.id);
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error verifying gym with id: ${id}: ${error}`);
@@ -236,7 +236,7 @@ export const unverifyGym: RequestHandler = async (req, res) => {
     if (!gym) {
       return sendNotFound(res, 'Gym not found');
     }
-    const updatedGym = await gymService.setGymVerified(id, false);
+    const updatedGym = await gymService.setGymVerified(id, false, user.id);
     return sendSuccess(res, updatedGym);
   } catch (error) {
     logger.error(`Error unverifying gym with id: ${id}: ${error}`);

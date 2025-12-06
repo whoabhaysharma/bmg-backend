@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { notificationService } from './notification.service';
 import { invalidateUserCache } from '../middleware/isAuthenticated';
 import { NotificationEvent } from '../types/notification-events';
+import { logAction } from './audit.service';
 
 export const userService = {
   // Create user
@@ -15,6 +16,14 @@ export const userService = {
       NotificationEvent.USER_CREATED,
       { userName: user.name }
     );
+
+    await logAction({
+      action: 'CREATE_USER',
+      entity: 'User',
+      entityId: user.id,
+      actorId: user.id, // Usually self-registration or admin
+      details: { name: user.name, mobileNumber: user.mobileNumber }
+    });
 
     return user;
   },
@@ -96,6 +105,14 @@ export const userService = {
       NotificationEvent.USER_UPDATED,
       { userName: updatedUser.name }
     );
+
+    await logAction({
+      action: 'UPDATE_USER',
+      entity: 'User',
+      entityId: id,
+      actorId: id, // Assuming self-update. If admin updates, we might need actorId passed.
+      details: data
+    });
 
     return updatedUser;
   },

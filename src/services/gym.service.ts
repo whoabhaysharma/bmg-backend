@@ -2,6 +2,7 @@ import prisma from '../lib/prisma';
 import { SubscriptionStatus, PaymentStatus } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
+import { logAction } from './audit.service';
 
 export interface CreateGymInput {
   name: string;
@@ -16,7 +17,7 @@ export interface UpdateGymInput {
 
 export const gymService = {
   // Toggle gym verification status
-  async setGymVerified(id: string, status: boolean) {
+  async setGymVerified(id: string, status: boolean, actorId?: string) {
     const gym = await prisma.gym.update({
       where: { id },
       data: { verified: status },
@@ -38,6 +39,17 @@ export const gymService = {
       status ? NotificationEvent.GYM_VERIFIED : NotificationEvent.GYM_UNVERIFIED,
       { gymName: gym.name }
     );
+
+    if (actorId) {
+      await logAction({
+        action: 'VERIFY_GYM',
+        entity: 'Gym',
+        entityId: gym.id,
+        actorId: actorId,
+        gymId: gym.id,
+        details: { verified: status }
+      });
+    }
 
     return gym;
   },
@@ -125,11 +137,20 @@ export const gymService = {
       { gymName: gym.name }
     );
 
+    await logAction({
+      action: 'CREATE_GYM',
+      entity: 'Gym',
+      entityId: gym.id,
+      actorId: data.ownerId, // The owner created it (or admin for them)
+      gymId: gym.id,
+      details: { name: gym.name, address: gym.address }
+    });
+
     return gym;
   },
 
   // Update gym
-  async updateGym(id: string, data: UpdateGymInput) {
+  async updateGym(id: string, data: UpdateGymInput, actorId?: string) {
     const gym = await prisma.gym.update({
       where: { id },
       data: {
@@ -150,6 +171,17 @@ export const gymService = {
       { gymName: gym.name }
     );
 
+    if (actorId) {
+      await logAction({
+        action: 'UPDATE_GYM',
+        entity: 'Gym',
+        entityId: gym.id,
+        actorId: actorId,
+        gymId: gym.id,
+        details: data
+      });
+    }
+
     return gym;
   },
 
@@ -165,7 +197,7 @@ export const gymService = {
   },
 
   // Delete gym
-  async deleteGym(id: string) {
+  async deleteGym(id: string, actorId?: string) {
     // Get gym details before deletion for notification
     const gym = await prisma.gym.findUnique({
       where: { id },
@@ -190,6 +222,17 @@ export const gymService = {
       NotificationEvent.GYM_DELETED,
       { gymName: gym.name }
     );
+
+    if (actorId) {
+       await logAction({
+        action: 'DELETE_GYM',
+        entity: 'Gym',
+        entityId: id,
+        actorId: actorId,
+        gymId: id,
+        details: { name: gym.name }
+      });
+    }
 
     return deleted;
   },

@@ -143,16 +143,17 @@ CREATE TABLE "Settlement" (
 );
 
 -- CreateTable
-CREATE TABLE "ApiKey" (
+CREATE TABLE "AuditLog" (
     "id" TEXT NOT NULL,
-    "key" TEXT NOT NULL,
-    "name" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "role" "Role" NOT NULL DEFAULT 'USER',
+    "action" TEXT NOT NULL,
+    "entity" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
+    "actorId" TEXT NOT NULL,
+    "gymId" TEXT,
+    "details" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "ApiKey_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -183,7 +184,10 @@ CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
 CREATE INDEX "Settlement_gymId_idx" ON "Settlement"("gymId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ApiKey_key_key" ON "ApiKey"("key");
+CREATE INDEX "AuditLog_gymId_idx" ON "AuditLog"("gymId");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_actorId_idx" ON "AuditLog"("actorId");
 
 -- AddForeignKey
 ALTER TABLE "Gym" ADD CONSTRAINT "Gym_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -220,3 +224,9 @@ ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "Settlement" ADD CONSTRAINT "Settlement_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;

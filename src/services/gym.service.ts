@@ -74,7 +74,7 @@ export const gymService = {
         orderBy: { createdAt: 'desc' },
         include: {
           owner: {
-            select: { id: true, name: true },
+            select: { id: true, name: true, mobileNumber: true },
           },
           _count: {
             select: { subscriptions: true },
@@ -224,7 +224,7 @@ export const gymService = {
     );
 
     if (actorId) {
-       await logAction({
+      await logAction({
         action: 'DELETE_GYM',
         entity: 'Gym',
         entityId: id,

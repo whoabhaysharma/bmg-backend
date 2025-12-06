@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 // import { subscriptionService } from '../services';
-import { paymentService } from '@services';
+import { paymentService, subscriptionService } from '@services';
 import { PaymentQueue } from '@queues';
 import prisma from '../lib/prisma';
 
@@ -88,7 +88,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
     console.log('Webhook Event:', event.event);
 
     // Add to queue for asynchronous processing
-    await PaymentQueue.add({ event });
+    await PaymentQueue.add(event);
     console.log('Payment event added to queue');
 
     return res.status(200).json({ status: 'ok' });
@@ -159,5 +159,116 @@ export const getAllPayments = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Get all payments error:', error);
     return res.status(500).json({ message: 'Failed to fetch payments' });
+  }
+};
+
+export const testPaymentFlow = async (req: Request, res: Response) => {
+  try {
+    const { userId, planId, gymId } = req.body;
+
+    if (!userId || !planId || !gymId) {
+      return res.status(400).json({ message: 'userId, planId, and gymId are required' });
+    }
+
+    // 1. Create Subscription (mimics frontend calling create subscription)
+    const { subscription, order } = await subscriptionService.createSubscription(userId, planId, gymId);
+
+    // 2. Simulate Payment Success Payload (mimics Razorpay webhook)
+    const paymentId = `pay_test_${Math.random().toString(36).substring(7)}`;
+    const event = {
+      entity: "event",
+      account_id: "acc_test",
+      event: "payment.captured",
+      contains: ["payment"],
+      payload: {
+        payment: {
+          entity: {
+            id: paymentId,
+            entity: "payment",
+            amount: order.amount,
+            currency: "INR",
+            status: "captured",
+            order_id: order.id,
+            invoice_id: null,
+            international: false,
+            method: "card",
+            amount_refunded: 0,
+            refund_status: null,
+            captured: true,
+            description: "Test Transaction",
+            card_id: "card_test",
+            bank: null,
+            wallet: null,
+            vpa: null,
+            email: "test@example.com",
+            contact: "+919999999999",
+            notes: {
+              subscriptionId: subscription.id
+            },
+            fee: 100,
+            tax: 18,
+            error_code: null,
+            error_description: null,
+            error_source: null,
+            error_step: null,
+            error_reason: null,
+            acquirer_data: {
+              auth_code: "123456"
+            },
+            created_at: Math.floor(Date.now() / 1000)
+          }
+        }
+      },
+      created_at: Math.floor(Date.now() / 1000)
+    };
+
+    // 3. Generate Signature
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!secret) {
+      throw new Error('RAZORPAY_WEBHOOK_SECRET is not set');
+    }
+
+    const payloadString = JSON.stringify(event);
+    // @ts-ignore
+    const crypto = await import('crypto');
+    const signature = crypto
+      .createHmac('sha256', secret)
+      .update(payloadString)
+      .digest('hex');
+
+    // 4. Call Webhook Endpoint
+    const port = process.env.PORT || 4000;
+    const webhookUrl = `http://localhost:${port}/api/payments/webhook`;
+
+    console.log(`Triggering webhook at ${webhookUrl}`);
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-razorpay-signature': signature
+      },
+      body: payloadString
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Webhook call failed: ${response.status} ${errorText}`);
+    }
+
+    return res.status(200).json({
+      message: 'Test payment flow completed successfully',
+      data: {
+        subscriptionId: subscription.id,
+        orderId: order.id,
+        paymentId: paymentId,
+        amount: order.amount,
+        webhookStatus: response.status
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Test payment flow error:', error);
+    return res.status(500).json({ message: error.message || 'Test payment flow failed' });
   }
 };

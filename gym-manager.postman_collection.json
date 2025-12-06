@@ -1010,6 +1010,53 @@
           "response": []
         },
         {
+          "name": "Test Payment Flow",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "if (jsonData.data) {",
+                  "    if (jsonData.data.subscriptionId) pm.environment.set(\"subscriptionId\", jsonData.data.subscriptionId);",
+                  "    if (jsonData.data.paymentId) pm.environment.set(\"paymentId\", jsonData.data.paymentId);",
+                  "    if (jsonData.data.orderId) pm.environment.set(\"razorpayOrderId\", jsonData.data.orderId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{userId}}\",\n    \"planId\": \"{{planId}}\",\n    \"gymId\": \"{{gymId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/test/flow",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "test",
+                "flow"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get All Payments",
           "request": {
             "method": "GET",

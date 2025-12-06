@@ -2,7 +2,7 @@ import { Request, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '@prisma/client';
 import NodeCache from 'node-cache';
-import { JWT_SECRET } from '../config/constants';
+import { config } from '../config/config';
 import logger from '../lib/logger';
 import { userService } from '@services';
 
@@ -64,7 +64,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as {
+      const decoded = jwt.verify(token, config.jwtSecret) as {
         userId: string;
         roles: string[];
         email: string;

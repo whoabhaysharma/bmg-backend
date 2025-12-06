@@ -1,11 +1,13 @@
 import Redis, { RedisOptions } from 'ioredis';
 import logger from './logger';
 
-if (!process.env.REDIS_URL) {
+import { config } from '../config/config';
+
+if (!config.redis.url) {
     logger.warn('REDIS_URL is not defined in .env file, using default redis://localhost:6379');
 }
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = config.redis.url;
 
 export const redisOptions: RedisOptions = {
     maxRetriesPerRequest: null,

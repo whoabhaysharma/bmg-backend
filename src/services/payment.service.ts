@@ -4,16 +4,18 @@ import prisma from '../lib/prisma';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 
+import { config } from '../config/config';
+
 // Ensure env keys exist
-if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+if (!config.razorpay.keyId || !config.razorpay.keySecret) {
   throw new Error(
     'Missing Razorpay environment variables: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required.'
   );
 }
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: config.razorpay.keyId,
+  key_secret: config.razorpay.keySecret,
 });
 
 export const paymentService = {
@@ -62,7 +64,7 @@ export const paymentService = {
         notes: {
           referenceId,
         },
-        callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success`, // You might want a specific success page
+        callback_url: `${config.appUrl}/payment/success`, // You might want a specific success page
         callback_method: 'get',
       });
 
@@ -82,7 +84,7 @@ export const paymentService = {
     const payload = `${orderId}|${paymentId}`;
 
     const expected = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+      .createHmac('sha256', config.razorpay.keySecret!)
       .update(payload)
       .digest('hex');
 

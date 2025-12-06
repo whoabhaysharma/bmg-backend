@@ -1,12 +1,10 @@
-import { config } from 'dotenv';
 import app from './app';
 import { initializeAdmin } from './lib/initializeAdmin';
 import './workers/paymentWorker'; // Initialize worker
 import { initAuditWorker } from './workers/audit.worker';
+import { config } from './config/config';
 
-config();
-
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
 const startServer = async () => {
   try {

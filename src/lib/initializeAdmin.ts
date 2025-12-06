@@ -1,9 +1,11 @@
 import prisma from './prisma';
 import { Role } from '@prisma/client';
 
+import { config } from '../config/config';
+
 export const initializeAdmin = async () => {
   try {
-    const adminPhoneNumber = process.env.ADMIN_PHONE_NUMBER;
+    const adminPhoneNumber = config.admin.phoneNumber;
 
     if (!adminPhoneNumber) {
       console.warn('⚠️  ADMIN_PHONE_NUMBER not set in environment variables');

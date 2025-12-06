@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/constants';
+import { config } from '../config/config';
 import logger from '../lib/logger';
 import { AuthService } from '@services';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
@@ -73,7 +73,7 @@ export const verifyOtp = async (
         name: user.name,
         roles: user.roles,
       },
-      JWT_SECRET,
+      config.jwtSecret,
       { expiresIn: '7d' }
     );
 
@@ -128,7 +128,7 @@ export const loginWithMagicLink = async (req: Request, res: Response) => {
         name: user.name,
         roles: user.roles,
       },
-      JWT_SECRET,
+      config.jwtSecret,
       { expiresIn: '7d' }
     );
 

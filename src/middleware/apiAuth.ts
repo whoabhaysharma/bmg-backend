@@ -3,11 +3,13 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './isAuthenticated';
 
 
+import { config } from '../config/config';
+
 export const apiAuth = async (req: Request, res: Response, next: NextFunction) => {
     const internalSecret = req.headers['x-internal-secret'];
 
     // 1. Check for Internal Shared Secret (Fastest, No DB)
-    if (internalSecret && internalSecret === process.env.INTERNAL_SECRET) {
+    if (internalSecret && internalSecret === config.internalSecret) {
         // Grant internal access
         (req as AuthenticatedRequest).user = {
             id: 'INTERNAL_SERVICE',

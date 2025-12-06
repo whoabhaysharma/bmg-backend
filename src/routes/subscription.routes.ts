@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { createSubscription, getMySubscriptions, getAllSubscriptions, manualActivateSubscription, createConsoleSubscription } from '../controllers';
+import { subscriptionController } from "controllers";
 import { isAuthenticated } from '../middleware';
 
 const router = Router();
 
-router.post('/', isAuthenticated, createSubscription);
-router.post('/console', isAuthenticated, createConsoleSubscription);
-router.get('/my-subscriptions', isAuthenticated, getMySubscriptions);
-router.get('/', isAuthenticated, getAllSubscriptions);
-router.patch('/:id/activate', isAuthenticated, manualActivateSubscription);
+router.post('/', isAuthenticated, subscriptionController.createSubscription);
+router.post('/console', isAuthenticated, subscriptionController.createConsoleSubscription);
+router.get('/my-subscriptions', isAuthenticated, subscriptionController.getMySubscriptions);
+router.get('/', isAuthenticated, subscriptionController.getAllSubscriptions);
+router.patch('/:id/activate', isAuthenticated, subscriptionController.manualActivateSubscription);
 
 export default router;

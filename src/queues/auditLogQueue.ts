@@ -1,12 +1,14 @@
 import { Queue } from 'bullmq';
+import logger from '../lib/logger';
 import { redisConnectionConfig } from '../lib/redis';
 import IORedis from 'ioredis';
 
+// Create a dedicated connection for the queue manager
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
-export const PAYMENT_QUEUE_NAME = 'payment-events';
+export const AUDIT_LOG_QUEUE_NAME = 'audit-logs';
 
-export const paymentQueue = new Queue(PAYMENT_QUEUE_NAME, {
+export const auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
     connection,
     defaultJobOptions: {
         attempts: 3,
@@ -15,10 +17,10 @@ export const paymentQueue = new Queue(PAYMENT_QUEUE_NAME, {
             delay: 1000,
         },
         removeOnComplete: true,
-        removeOnFail: false,
+        removeOnFail: 24 * 3600, // Keep failed jobs for 24h
     },
 });
 
-export const addPaymentEventToQueue = async (event: any) => {
-    await paymentQueue.add('payment_event', event);
-};
+auditLogQueue.on('error', (err) => {
+    logger.error('Audit Log Queue Error:', err);
+});

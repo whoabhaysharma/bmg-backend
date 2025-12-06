@@ -1,13 +1,6 @@
 import { Router } from 'express';
 import { Role } from '@prisma/client';
-import {
-    createPlan,
-    getAllPlans,
-    getPlanById,
-    updatePlan,
-    deletePlan,
-    getActivePlansByGym,
-} from '../controllers';
+import { planController } from "controllers";
 import { isAuthenticated, authorize, validate } from '../middleware';
 import { planCreateSchema, planUpdateSchema } from '../types/schemas';
 
@@ -19,17 +12,17 @@ router.post(
     isAuthenticated,
     authorize([Role.OWNER, Role.ADMIN]),
     validate({ body: planCreateSchema }),
-    createPlan
+    planController.createPlan
 );
 
 // Get all plans for a gym (by query parameter)
-router.get('/', isAuthenticated, getAllPlans);
+router.get('/', isAuthenticated, planController.getAllPlans);
 
 // Get active plans for a gym (by query parameter)
-router.get('/active', isAuthenticated, getActivePlansByGym);
+router.get('/active', isAuthenticated, planController.getActivePlansByGym);
 
 // Get a single plan by ID
-router.get('/:planId', isAuthenticated, getPlanById);
+router.get('/:planId', isAuthenticated, planController.getPlanById);
 
 // Update a plan (Owner or Admin only)
 router.put(
@@ -37,7 +30,7 @@ router.put(
     isAuthenticated,
     authorize([Role.OWNER, Role.ADMIN]),
     validate({ body: planUpdateSchema }),
-    updatePlan
+    planController.updatePlan
 );
 
 // Delete a plan (Owner or Admin only)
@@ -45,7 +38,7 @@ router.delete(
     '/:planId',
     isAuthenticated,
     authorize([Role.OWNER, Role.ADMIN]),
-    deletePlan
+    planController.deletePlan
 );
 
 export default router;

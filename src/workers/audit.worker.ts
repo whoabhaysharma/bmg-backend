@@ -1,16 +1,12 @@
 import { Worker, Job } from 'bullmq';
-import { prisma } from '../lib/prisma';
+import prisma from '../lib/prisma';
 import logger from '../lib/logger';
-import { AUDIT_LOG_QUEUE_NAME } from '../lib/queue';
+import { AUDIT_LOG_QUEUE_NAME } from '../queues/auditLogQueue';
 import { AuditLogData } from '../services/audit.service';
+import { redisConnectionConfig } from '../lib/redis';
 import IORedis from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-
-const connection = new IORedis(redisUrl, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false
-});
+const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
 export const initAuditWorker = () => {
   const worker = new Worker<AuditLogData>(
@@ -44,7 +40,7 @@ export const initAuditWorker = () => {
     }
   );
 
-  worker.on('completed', (job) => {
+  worker.on('completed', () => {
     // logger.info(`Audit log job ${job.id} completed`);
   });
 

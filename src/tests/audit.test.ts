@@ -1,8 +1,8 @@
 import { logAction, AuditLogData } from '../services/audit.service';
-import { auditLogQueue } from '../lib/queue';
+import { auditLogQueue } from '../queues/auditLogQueue';
 
 // Mock bullmq
-jest.mock('../lib/queue', () => ({
+jest.mock('../queues/auditLogQueue', () => ({
   auditLogQueue: {
     add: jest.fn(),
     on: jest.fn(),

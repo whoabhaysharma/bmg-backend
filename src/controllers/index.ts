@@ -1,10 +1,11 @@
-export * from './auth.controller';
-export * from './apiKey.controller';
-export * from './user.controller';
-export * from './settlement.controller';
-export * from './gym.controller';
-export * from './plan.controller';
-export * from './subscription.controller';
-export * from './payment.controller';
-export * from './attendance.controller';
-export * from './notification.controller';
+export * as authController from './auth.controller';
+
+export * as userController from './user.controller';
+export * as settlementController from './settlement.controller';
+export * as gymController from './gym.controller';
+export * as planController from './plan.controller';
+export * as subscriptionController from './subscription.controller';
+export * as paymentController from './payment.controller';
+export * as attendanceController from './attendance.controller';
+export * as notificationController from './notification.controller';
+export * as auditController from './audit.controller';

@@ -1,15 +1,11 @@
 import { Router } from 'express';
-import {
-    getNotifications,
-    markNotificationRead,
-    markAllNotificationsRead,
-} from '../controllers/notification.controller';
+import { notificationController } from "controllers";
 import { isAuthenticated } from '../middleware';
 
 const router = Router();
 
-router.get('/', isAuthenticated, getNotifications);
-router.patch('/:id/read', isAuthenticated, markNotificationRead);
-router.patch('/read-all', isAuthenticated, markAllNotificationsRead);
+router.get('/', isAuthenticated, notificationController.getNotifications);
+router.patch('/:id/read', isAuthenticated, notificationController.markNotificationRead);
+router.patch('/read-all', isAuthenticated, notificationController.markAllNotificationsRead);
 
 export default router;

@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { getAllPayments, handleWebhook } from '../controllers';
+import { paymentController } from "controllers";
 import { isAuthenticated, apiAuth } from '../middleware';
 
 const router = Router();
 
-router.post('/webhook', handleWebhook);
-router.get('/', apiAuth, isAuthenticated, getAllPayments);
+router.post('/webhook', paymentController.handleWebhook);
+router.get('/', apiAuth, isAuthenticated, paymentController.getAllPayments);
 
 export default router;

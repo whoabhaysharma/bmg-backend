@@ -152,3 +152,13 @@ export const getUnsettledAmount = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to fetch unsettled amount' });
     }
 }
+
+export const getUnsettledSummary = async (_req: Request, res: Response) => {
+    try {
+        const summary = await settlementService.getUnsettledSummary();
+        return res.status(200).json({ data: summary });
+    } catch (error) {
+        console.error('Get unsettled summary error:', error);
+        return res.status(500).json({ message: 'Failed to fetch unsettled summary' });
+    }
+};

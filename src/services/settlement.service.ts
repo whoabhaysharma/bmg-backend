@@ -1,4 +1,4 @@
-import { PrismaClient, SettlementStatus, PaymentStatus, SubscriptionSource } from '@prisma/client';
+import { PrismaClient, SettlementStatus, PaymentStatus, PaymentMethod } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 
@@ -11,8 +11,9 @@ export const settlementService = {
             where: {
                 subscription: {
                     gymId,
-                    source: SubscriptionSource.APP, // Only Online payments
                 },
+                razorpayPaymentId: { gt: '' }, // Only Online payments (Not null and not empty)
+                method: { not: PaymentMethod.CONSOLE }, // Double check to exclude Console payments
                 status: PaymentStatus.COMPLETED,
                 settlementId: null,
             },
@@ -27,6 +28,59 @@ export const settlementService = {
         });
     },
 
+    // Get Unsettled Summary (Aggregated by Gym)
+    async getUnsettledSummary() {
+        // 1. Find all unsettled payments
+        const payments = await prisma.payment.findMany({
+            where: {
+                razorpayPaymentId: { gt: '' }, // Only Online payments
+                method: { not: PaymentMethod.CONSOLE },
+                status: PaymentStatus.COMPLETED,
+                settlementId: null,
+            },
+            include: {
+                subscription: {
+                    include: {
+                        gym: {
+                            include: {
+                                owner: { select: { name: true, mobileNumber: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. Aggregate by Gym
+        const summaryMap = new Map<string, {
+            gymId: string;
+            gymName: string;
+            ownerName: string;
+            amount: number;
+            count: number;
+        }>();
+
+        for (const payment of payments) {
+            const gym = payment.subscription.gym;
+            const existing = summaryMap.get(gym.id);
+
+            if (existing) {
+                existing.amount += payment.amount;
+                existing.count += 1;
+            } else {
+                summaryMap.set(gym.id, {
+                    gymId: gym.id,
+                    gymName: gym.name,
+                    ownerName: gym.owner.name,
+                    amount: payment.amount,
+                    count: 1
+                });
+            }
+        }
+
+        return Array.from(summaryMap.values());
+    },
+
     // Create Settlement (Admin action)
     async createSettlement(gymId: string) {
         return prisma.$transaction(async (tx) => {
@@ -35,8 +89,9 @@ export const settlementService = {
                 where: {
                     subscription: {
                         gymId,
-                        source: SubscriptionSource.APP,
                     },
+                    razorpayPaymentId: { gt: '' }, // Only Online payments
+                    method: { not: PaymentMethod.CONSOLE },
                     status: PaymentStatus.COMPLETED,
                     settlementId: null,
                 },

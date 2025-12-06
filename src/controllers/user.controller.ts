@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { userService } from '../services';
+import { userService } from '@services';
 import { Role } from '@prisma/client';
 
 import { AuthenticatedRequest } from '../middleware';

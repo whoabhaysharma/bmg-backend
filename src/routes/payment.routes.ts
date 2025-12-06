@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { paymentController } from "controllers";
+import { paymentController } from "@controllers";
 import { isAuthenticated, apiAuth } from '../middleware';
 
 const router = Router();

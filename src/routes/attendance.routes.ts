@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { attendanceController } from "controllers";
+import { attendanceController } from "@controllers";
 import { isAuthenticated } from '../middleware';
 import { authorize } from '../middleware/authorize';
 import { Role } from '@prisma/client';

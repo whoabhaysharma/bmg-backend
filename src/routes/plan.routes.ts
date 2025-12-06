@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Role } from '@prisma/client';
-import { planController } from "controllers";
+import { planController } from "@controllers";
 import { isAuthenticated, authorize, validate } from '../middleware';
 import { planCreateSchema, planUpdateSchema } from '../types/schemas';
 

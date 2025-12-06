@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { settlementService } from '../services';
+import { settlementService } from '@services';
 import { SettlementStatus } from '@prisma/client';
 
 import prisma from '../lib/prisma';

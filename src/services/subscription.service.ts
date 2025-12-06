@@ -3,7 +3,7 @@ import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 import { randomUUID } from 'crypto';
-import { notificationQueue } from '../queues/notificationQueue';
+import { notificationQueue } from '@queues/notificationQueue';
 import { logAction } from './audit.service';
 
 const prisma = new PrismaClient();
@@ -459,7 +459,7 @@ export const subscriptionService = {
     );
 
     if (actorId) {
-       await logAction({
+      await logAction({
         action: 'ACTIVATE_SUBSCRIPTION',
         entity: 'Subscription',
         entityId: subscriptionId,

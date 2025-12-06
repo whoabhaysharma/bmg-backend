@@ -24,8 +24,29 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "controllers": [
+      "@controllers": [
         "src/controllers"
+      ],
+      "@controllers/*": [
+        "src/controllers/*"
+      ],
+      "@queues": [
+        "src/queues"
+      ],
+      "@queues/*": [
+        "src/queues/*"
+      ],
+      "@routes": [
+        "src/routes"
+      ],
+      "@routes/*": [
+        "src/routes/*"
+      ],
+      "@services": [
+        "src/services"
+      ],
+      "@services/*": [
+        "src/services/*"
       ]
     }
   },

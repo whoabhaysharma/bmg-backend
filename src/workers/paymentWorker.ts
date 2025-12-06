@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import { redisConnectionConfig } from '../lib/redis';
-import { PAYMENT_QUEUE_NAME } from '../queues/paymentQueue';
-import { subscriptionService } from '../services/subscription.service';
+import { PAYMENT_QUEUE_NAME } from '@queues/paymentQueue';
+import { subscriptionService } from '@services';
 import IORedis from 'ioredis';
 
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { subscriptionController } from "controllers";
+import { subscriptionController } from "@controllers";
 import { isAuthenticated } from '../middleware';
 
 const router = Router();

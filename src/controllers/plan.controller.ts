@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import logger from '../lib/logger';
 import { AuthenticatedRequest } from '../types/api.types';
-import { gymService, planService } from '../services';
+import { gymService, planService } from '@services';
 import { sendSuccess, sendBadRequest, sendNotFound, sendForbidden, sendInternalError } from '../utils/response';
 import { Role } from '@prisma/client';
 import prisma from '../lib/prisma';

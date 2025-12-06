@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants';
 import logger from '../lib/logger';
-import { AuthService } from '../services';
+import { AuthService } from '@services';
 import { sendSuccess, sendError, sendBadRequest } from '../utils/response';
 
 // Simple validation regex for 10 digits. This should ideally be moved to a constants/util file.

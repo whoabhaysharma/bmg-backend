@@ -1,4 +1,4 @@
-import { auditLogQueue, AUDIT_LOG_QUEUE_NAME } from '../queues/auditLogQueue';
+import { auditLogQueue, AUDIT_LOG_QUEUE_NAME } from '@queues/auditLogQueue';
 import logger from '../lib/logger';
 import prisma from '../lib/prisma';
 

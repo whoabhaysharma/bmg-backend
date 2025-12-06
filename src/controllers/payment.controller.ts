@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 // import { subscriptionService } from '../services';
-import { paymentService } from '../services/payment.service';
-import { addPaymentEventToQueue } from '../queues/paymentQueue';
+import { paymentService } from '@services';
+import { addPaymentEventToQueue } from '@queues/paymentQueue';
 import prisma from '../lib/prisma';
 
 /*

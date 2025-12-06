@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { notificationService } from '../services/notification.service';
+import { notificationService } from '@services';
 import { getAuthUser } from '../utils/getAuthUser';
 import { sendSuccess, sendError, sendUnauthorized } from '../utils/response';
 

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware';
-import { attendanceService } from '../services';
+import { attendanceService } from '@services';
 import logger from '../lib/logger';
 
 import prisma from '../lib/prisma';

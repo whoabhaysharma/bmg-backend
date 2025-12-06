@@ -7,4 +7,4 @@ export * from './subscriptionPlan.service';
 export * from './user.service';
 export * from './settlement.service';
 export * from './notification.service';
-
+export * from './audit.service';

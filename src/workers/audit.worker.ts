@@ -1,8 +1,8 @@
 import { Worker, Job } from 'bullmq';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
-import { AUDIT_LOG_QUEUE_NAME } from '../queues/auditLogQueue';
-import { AuditLogData } from '../services/audit.service';
+import { AUDIT_LOG_QUEUE_NAME } from '@queues/auditLogQueue';
+import { AuditLogData } from '@services';
 import { redisConnectionConfig } from '../lib/redis';
 import IORedis from 'ioredis';
 

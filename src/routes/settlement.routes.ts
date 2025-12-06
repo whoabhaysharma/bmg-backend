@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { settlementController } from "controllers";
+import { settlementController } from "@controllers";
 import { isAuthenticated, isAdmin } from '../middleware';
 
 const router = Router();

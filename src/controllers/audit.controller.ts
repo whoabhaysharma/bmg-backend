@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Role } from '@prisma/client';
-import { auditService } from '../services/audit.service';
+import { auditService } from '@services';
 import prisma from '../lib/prisma'; // Still needed for gym verification
 
 // Get audit logs for a specific gym (Owner/Admin)

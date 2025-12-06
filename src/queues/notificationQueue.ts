@@ -4,8 +4,12 @@ import IORedis from 'ioredis';
 
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
-export const NOTIFICATION_QUEUE_NAME = 'notification-queue';
+export const QUEUE_NAME = 'notification-queue';
 
-export const notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
+export const queue = new Queue(QUEUE_NAME, {
     connection,
 });
+
+export const add = async (name: string, data: any) => {
+    await queue.add(name, data);
+};

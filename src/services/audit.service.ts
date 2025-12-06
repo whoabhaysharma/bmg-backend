@@ -1,4 +1,4 @@
-import { auditLogQueue, AUDIT_LOG_QUEUE_NAME } from '@queues/auditLogQueue';
+import { AuditLogQueue } from '@queues';
 import logger from '../lib/logger';
 import prisma from '../lib/prisma';
 
@@ -19,7 +19,7 @@ export interface AuditLogData {
  */
 export const logAction = async (data: AuditLogData) => {
   try {
-    await auditLogQueue.add(AUDIT_LOG_QUEUE_NAME, data);
+    await AuditLogQueue.add(data);
   } catch (error) {
     // We log the error but don't throw it to avoid blocking the main flow
     logger.error('Failed to queue audit log:', error);

@@ -1,7 +1,7 @@
 import { Worker, Job } from 'bullmq';
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
-import { AUDIT_LOG_QUEUE_NAME } from '@queues/auditLogQueue';
+import { AuditLogQueue } from '@queues';
 import { AuditLogData } from '@services';
 import { redisConnectionConfig } from '../lib/redis';
 import IORedis from 'ioredis';
@@ -10,7 +10,7 @@ const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.
 
 export const initAuditWorker = () => {
   const worker = new Worker<AuditLogData>(
-    AUDIT_LOG_QUEUE_NAME,
+    AuditLogQueue.QUEUE_NAME,
     async (job: Job<AuditLogData>) => {
       const { action, entity, entityId, actorId, gymId, details } = job.data;
 

@@ -6,9 +6,9 @@ import IORedis from 'ioredis';
 // Create a dedicated connection for the queue manager
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
-export const AUDIT_LOG_QUEUE_NAME = 'audit-logs';
+export const QUEUE_NAME = 'audit-logs';
 
-export const auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
+export const queue = new Queue(QUEUE_NAME, {
     connection,
     defaultJobOptions: {
         attempts: 3,
@@ -21,6 +21,10 @@ export const auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
     },
 });
 
-auditLogQueue.on('error', (err) => {
+queue.on('error', (err: any) => {
     logger.error('Audit Log Queue Error:', err);
 });
+
+export const add = async (data: any) => {
+    await queue.add(QUEUE_NAME, data);
+};

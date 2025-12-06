@@ -1,13 +1,13 @@
 import { Worker } from 'bullmq';
 import { redisConnectionConfig } from '../lib/redis';
-import { PAYMENT_QUEUE_NAME } from '@queues/paymentQueue';
+import { PaymentQueue } from '@queues';
 import { subscriptionService } from '@services';
 import IORedis from 'ioredis';
 
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
 export const paymentWorker = new Worker(
-    PAYMENT_QUEUE_NAME,
+    PaymentQueue.QUEUE_NAME,
     async (job) => {
         console.log(`Processing payment job ${job.id}`);
         const event = job.data;

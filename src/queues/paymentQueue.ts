@@ -4,9 +4,9 @@ import IORedis from 'ioredis';
 
 const connection = new IORedis(redisConnectionConfig.url, redisConnectionConfig.options);
 
-export const PAYMENT_QUEUE_NAME = 'payment-events';
+export const QUEUE_NAME = 'payment-events';
 
-export const paymentQueue = new Queue(PAYMENT_QUEUE_NAME, {
+export const queue = new Queue(QUEUE_NAME, {
     connection,
     defaultJobOptions: {
         attempts: 3,
@@ -19,6 +19,6 @@ export const paymentQueue = new Queue(PAYMENT_QUEUE_NAME, {
     },
 });
 
-export const addPaymentEventToQueue = async (event: any) => {
-    await paymentQueue.add('payment_event', event);
+export const add = async (event: any) => {
+    await queue.add('payment_event', event);
 };

@@ -1,13 +1,13 @@
 import { logAction, AuditLogData } from '../services/audit.service';
-import { auditLogQueue } from '../queues/auditLogQueue';
+import { queue } from '../queues/auditLogQueue';
 
 // Mock bullmq
 jest.mock('../queues/auditLogQueue', () => ({
-  auditLogQueue: {
+  queue: {
     add: jest.fn(),
     on: jest.fn(),
   },
-  AUDIT_LOG_QUEUE_NAME: 'audit-logs',
+  QUEUE_NAME: 'audit-logs',
 }));
 
 describe('Audit Service', () => {
@@ -26,6 +26,6 @@ describe('Audit Service', () => {
 
     await logAction(logData);
 
-    expect(auditLogQueue.add).toHaveBeenCalledWith('audit-logs', logData);
+    expect(queue.add).toHaveBeenCalledWith('audit-logs', logData);
   });
 });

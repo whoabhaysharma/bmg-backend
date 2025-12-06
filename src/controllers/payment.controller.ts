@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 // import { subscriptionService } from '../services';
 import { paymentService } from '@services';
-import { addPaymentEventToQueue } from '@queues/paymentQueue';
+import { PaymentQueue } from '@queues';
 import prisma from '../lib/prisma';
 
 /*
@@ -88,7 +88,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
     console.log('Webhook Event:', event.event);
 
     // Add to queue for asynchronous processing
-    await addPaymentEventToQueue(event);
+    await PaymentQueue.add({ event });
     console.log('Payment event added to queue');
 
     return res.status(200).json({ status: 'ok' });

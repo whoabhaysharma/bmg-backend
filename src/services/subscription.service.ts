@@ -3,7 +3,7 @@ import { paymentService } from './payment.service';
 import { notificationService } from './notification.service';
 import { NotificationEvent } from '../types/notification-events';
 import { randomUUID } from 'crypto';
-import { notificationQueue } from '@queues/notificationQueue';
+import { NotificationQueue } from '@queues';
 import { logAction } from './audit.service';
 
 const prisma = new PrismaClient();
@@ -292,7 +292,7 @@ export const subscriptionService = {
     try {
       const user = payment.subscription.user;
       if (user.mobileNumber) {
-        notificationQueue.add('send-whatsapp', {
+        NotificationQueue.add('send-whatsapp', {
           type: 'WHATSAPP_ACCESS_CODE',
           payload: {
             mobile: user.mobileNumber,

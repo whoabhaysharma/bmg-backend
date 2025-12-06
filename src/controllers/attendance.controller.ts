@@ -209,17 +209,17 @@ export const verifyCheckIn = async (
   logger.info('Verifying check-in', { userId: req.user.id, gymId, accessCode });
 
   try {
-    const attendance = await attendanceService.verifyAndCheckIn(accessCode, gymId);
+    const { lastCheckIn, ...attendanceData } = await attendanceService.verifyAndCheckIn(accessCode, gymId);
 
     logger.info('Successfully verified and checked in', {
-      userId: attendance.userId,
+      userId: attendanceData.userId,
       gymId,
-      attendanceId: attendance.id,
+      attendanceId: attendanceData.id,
     });
 
     return res.status(201).json({
       success: true,
-      data: attendance,
+      data: { ...attendanceData, lastCheckIn },
       error: null,
     });
   } catch (error: any) {

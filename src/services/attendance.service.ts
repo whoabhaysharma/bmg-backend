@@ -253,7 +253,17 @@ export const attendanceService = {
       throw new Error('Subscription has expired');
     }
 
-    // 5. Create attendance record
+    // 5. Get Last Check-in (before creating new one)
+    const lastAttendance = await prisma.attendance.findFirst({
+      where: {
+        subscriptionId: subscription.id,
+      },
+      orderBy: {
+        checkIn: 'desc',
+      },
+    });
+
+    // 6. Create attendance record
     const attendance = await prisma.attendance.create({
       data: {
         userId: subscription.userId,
@@ -306,6 +316,6 @@ export const attendanceService = {
       details: { checkInTime: attendance.checkIn, method: 'ACCESS_CODE' }
     });
 
-    return attendance;
+    return { ...attendance, lastCheckIn: lastAttendance?.checkIn || null };
   },
 };

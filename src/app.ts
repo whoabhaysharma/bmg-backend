@@ -14,7 +14,7 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: true, // Allow all origins
+    origin: true,
     credentials: true
 }));
 app.use(helmet());
